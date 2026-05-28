@@ -1,11 +1,12 @@
 """Cross-sibling degeneracy check (Workflow B).
 
-For a sibling set, run each sibling's main.py against the OTHER siblings'
-oracle.py modules. If any cross-pair returns within tolerance, the siblings
-collapse into each other (they're not actually distinct tasks).
+Reads from canonical Everglades CLI paths (oracle/setup.py, solution/main.py).
 
-Also: token-level similarity check on reasoning_trap.md across siblings —
-if two are >80% lexically similar, flag.
+For a sibling set, run each sibling's solution/main.py against the OTHER
+siblings' oracle/setup.py modules. If any cross-pair returns within tolerance,
+the siblings collapse into each other.
+
+Also: token-level similarity check on reasoning_trap.md across siblings.
 
 CLI:
   python3 degeneracy.py <sibling_dir1> <sibling_dir2> [...]
@@ -19,12 +20,13 @@ import re
 import sys
 from pathlib import Path
 
+import paths
 from verify import check_answer
 
 
 def load_oracle(draft_dir: Path):
     spec = importlib.util.spec_from_file_location(
-        f"oracle_{draft_dir.name}", draft_dir / "oracle.py"
+        f"oracle_setup_{draft_dir.name}", paths.oracle_setup(draft_dir)
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -32,13 +34,10 @@ def load_oracle(draft_dir: Path):
 
 
 def load_main(draft_dir: Path):
-    """Dynamic-import main.py — assumes it defines `solve(query_oracle)`.
-
-    If it doesn't (and instead just runs at module-import via __main__), we
-    fall back to subprocess.
-    """
+    """Dynamic-import solution/main.py. Falls back gracefully if it doesn't
+    define `solve(query_oracle)`."""
     spec = importlib.util.spec_from_file_location(
-        f"main_{draft_dir.name}", draft_dir / "main.py"
+        f"main_{draft_dir.name}", paths.main_py(draft_dir)
     )
     try:
         mod = importlib.util.module_from_spec(spec)
@@ -49,7 +48,6 @@ def load_main(draft_dir: Path):
 
 
 def shingle(text: str, n: int = 5) -> set:
-    """Word-level n-gram shingles for Jaccard similarity."""
     words = re.findall(r"\w+", text.lower())
     return set(tuple(words[i : i + n]) for i in range(len(words) - n + 1))
 
@@ -66,7 +64,7 @@ def check_siblings(siblings: list[Path]) -> dict:
     # 1. Lexical similarity on reasoning_trap.md
     traps = {}
     for s in siblings:
-        rt = s / "reasoning_trap.md"
+        rt = paths.reasoning_trap(s)
         if rt.exists():
             traps[s.name] = shingle(rt.read_text())
     names = list(traps.keys())
@@ -83,10 +81,10 @@ def check_siblings(siblings: list[Path]) -> dict:
                     ),
                 })
 
-    # 2. Cross-oracle solvability — does sibling A's main.py solve sibling B's oracle?
+    # 2. Cross-oracle solvability
     expected_per = {}
     for s in siblings:
-        ep = s / "expected.json"
+        ep = paths.expected_json(s)
         if ep.exists():
             expected_per[s.name] = json.loads(ep.read_text())
 
@@ -94,7 +92,6 @@ def check_siblings(siblings: list[Path]) -> dict:
         for j, sj in enumerate(siblings):
             if i == j:
                 continue
-            # Try: load si's main as a module, swap in sj's oracle, see if it produces sj's answer
             mi = load_main(si)
             if mi is None or not hasattr(mi, "solve"):
                 continue
@@ -108,7 +105,7 @@ def check_siblings(siblings: list[Path]) -> dict:
                     "severity": "error",
                     "rule": "cross-oracle-solvable",
                     "msg": (
-                        f"{si.name}'s main.py solves {sj.name}'s oracle. "
+                        f"{si.name}'s solution/main.py solves {sj.name}'s oracle/setup.py. "
                         f"Siblings are not orthogonal — they share too much structure."
                     ),
                 })

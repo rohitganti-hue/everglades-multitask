@@ -1,9 +1,0 @@
-name: <draft-name>
-domain: <Bioinformatics | Computational Chemistry | ...>
-subdomain: <free text>
-directionality: Inverse
-tool: <primary tool, e.g. scanpy, pyscf, ngspice>
-tolerance: <0 for exact, else relative decimal like 0.05>
-packages: <comma-separated package list>
-rls_task_id: <filled in after /everglades-push>
-last_synced: <ISO timestamp, filled after push>

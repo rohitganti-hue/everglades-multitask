@@ -1,0 +1,13 @@
+# Task metadata — matches the master Everglades CLI structure exactly.
+# This file maps directly to RLS form fields when the task is pushed.
+
+domain: <electrical_engineering | bioinformatics | computational_chemistry | ...>
+sub_domain: <free text, e.g. circuit_analysis>
+direction: inverse              # or forward
+simulator: <primary tool, e.g. ngspice, scanpy, pyscf>
+timeout_minutes: 10
+
+# Skill-internal fields (not part of the master spec; used by the skill only):
+name: <draft-name>
+rls_task_id: <filled in after /everglades-push>
+last_synced: <ISO timestamp, filled after push>

@@ -1,0 +1,12 @@
+# Forward task metadata — matches the master Everglades CLI structure.
+
+domain: <mechanical_engineering | astrophysics | ...>
+sub_domain: <free text>
+direction: forward
+simulator: <primary tool, e.g. openfoam, scikit-fem, astropy>
+timeout_minutes: 30
+
+# Skill-internal fields:
+name: <draft-name>
+rls_task_id: <filled in after /everglades-push>
+last_synced: <ISO timestamp, filled after push>

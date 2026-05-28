@@ -1,20 +1,23 @@
-"""Anthropic-API preview eval — Opus 4.7 × N attempts vs a local oracle.py.
+"""Anthropic-API preview eval — Opus 4.7 × N attempts vs the local oracle/setup.py.
+
+Reads:
+  - problem.md             — the prompt the model sees
+  - oracle/setup.py        — the hidden system (loaded via importlib)
+  - golden/expected.json   — the golden answer + tolerance
 
 Runs N parallel attempts via asyncio. Each attempt:
   - Loads the draft's problem.md as the user message
   - Defines two tools: query_oracle(mode, parameters) and submit_answer(value)
-  - Routes query_oracle calls to the local oracle.py module
+  - Routes query_oracle calls to oracle.setup.query_oracle
   - Records the transcript
-  - On submit_answer, compares to expected.json within tolerance
+  - On submit_answer, compares to golden/expected.json within tolerance
+
+This matches the canonical Everglades CLI structure.
 
 CLI:
   python3 preview.py <draft_dir>
   python3 preview.py <draft_dir> --attempts 8 --model claude-opus-4-7
-  python3 preview.py <draft_dir> --batch <draft1> <draft2> <draft3>
-
-This is the cheapest, fastest signal an expert can get on whether their task
-will pass the ≤4/16 Taiga bar — typically catches "too easy" and "broken"
-in ~3 minutes vs ~40 minutes for a real Taiga 16-model run.
+  python3 preview.py <draft_dir1> <draft_dir2> ...        # batch
 """
 from __future__ import annotations
 
@@ -24,13 +27,12 @@ import importlib.util
 import json
 import sys
 import time
-import traceback
 from datetime import datetime
 from pathlib import Path
 
+import paths
 from config import load as load_config
 
-# Anthropic SDK
 try:
     import anthropic
 except ImportError:
@@ -42,12 +44,12 @@ except ImportError:
 
 
 def load_oracle_module(draft_dir: Path):
-    """Dynamic-import the draft's oracle.py."""
-    oracle_path = draft_dir / "oracle.py"
+    """Dynamic-import the draft's oracle/setup.py."""
+    oracle_path = paths.oracle_setup(draft_dir)
     if not oracle_path.exists():
-        raise FileNotFoundError(f"No oracle.py at {oracle_path}")
+        raise FileNotFoundError(f"No oracle/setup.py at {oracle_path}")
     spec = importlib.util.spec_from_file_location(
-        f"oracle_{draft_dir.name}", oracle_path
+        f"oracle_setup_{draft_dir.name}", oracle_path
     )
     if spec is None or spec.loader is None:
         raise ImportError(f"Could not load {oracle_path}")
@@ -59,38 +61,32 @@ def load_oracle_module(draft_dir: Path):
 
 
 def load_expected(draft_dir: Path):
-    expected_path = draft_dir / "expected.json"
-    if not expected_path.exists():
-        raise FileNotFoundError(f"No expected.json at {expected_path}")
-    with expected_path.open() as f:
-        return json.load(f)
+    p = paths.expected_json(draft_dir)
+    if not p.exists():
+        raise FileNotFoundError(f"No golden/expected.json at {p}")
+    return json.loads(p.read_text())
 
 
 def load_problem(draft_dir: Path):
-    p = draft_dir / "problem.md"
+    p = paths.problem_md(draft_dir)
     if not p.exists():
         raise FileNotFoundError(f"No problem.md at {p}")
     return p.read_text()
 
 
 def check_answer(submitted, expected: dict) -> bool:
-    """Compare submitted answer to expected.json within tolerance."""
     target = expected.get("answer")
     tol = expected.get("tolerance", 0)
-    # Numeric tolerance
     try:
         s = float(submitted)
         t = float(target)
         if tol == 0:
             return s == t
-        # relative tolerance
         return abs(s - t) <= abs(t) * tol if t != 0 else abs(s) <= tol
     except (TypeError, ValueError):
         pass
-    # String exact (case-insensitive)
     if isinstance(submitted, str) and isinstance(target, str):
         return submitted.strip().lower() == target.strip().lower()
-    # JSON / structured equality
     return submitted == target
 
 
@@ -99,7 +95,8 @@ TOOLS = [
         "name": "query_oracle",
         "description": (
             "Query the hidden system. The oracle returns raw observations "
-            "(not judgments). Available modes are listed via query_oracle(mode='help', parameters={})."
+            "(not judgments). Available modes are listed via "
+            "query_oracle(mode='help', parameters={})."
         ),
         "input_schema": {
             "type": "object",
@@ -132,10 +129,6 @@ async def run_attempt(
     model: str,
     max_steps: int = 30,
 ) -> dict:
-    """Run one Anthropic agent attempt against the local oracle.
-
-    Returns: {attempt, passed, submitted, transcript, queries_used, error}
-    """
     messages = [{"role": "user", "content": problem}]
     transcript = []
     queries_used = 0
@@ -167,23 +160,19 @@ async def run_attempt(
         )
 
         if resp.stop_reason != "tool_use":
-            # Done reasoning without submit; no answer
             break
 
-        # Process tool calls
         tool_results = []
         for block in resp.content:
             if block.type != "tool_use":
                 continue
             if block.name == "submit_answer":
                 submitted = block.input.get("value")
-                tool_results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": "Answer recorded. Task complete.",
-                    }
-                )
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": "Answer recorded. Task complete.",
+                })
             elif block.name == "query_oracle":
                 queries_used += 1
                 try:
@@ -191,22 +180,18 @@ async def run_attempt(
                         block.input.get("mode"),
                         block.input.get("parameters", {}),
                     )
-                    tool_results.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": json.dumps(result, default=str)[:8000],
-                        }
-                    )
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": json.dumps(result, default=str)[:8000],
+                    })
                 except Exception as e:
-                    tool_results.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": f"Oracle error: {e}",
-                            "is_error": True,
-                        }
-                    )
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": f"Oracle error: {e}",
+                        "is_error": True,
+                    })
 
         if submitted is not None:
             break
@@ -260,11 +245,10 @@ async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
         "attempts_detail": results,
         "ran_at": datetime.utcnow().isoformat() + "Z",
     }
-    # Save
-    runs_dir = draft_dir / "runs"
-    runs_dir.mkdir(parents=True, exist_ok=True)
+    runs = paths.runs_dir(draft_dir)
+    runs.mkdir(parents=True, exist_ok=True)
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    (runs_dir / f"preview_{ts}.json").write_text(json.dumps(summary, default=str, indent=2))
+    (runs / f"preview_{ts}.json").write_text(json.dumps(summary, default=str, indent=2))
     return summary
 
 
@@ -300,13 +284,11 @@ async def main_async():
             f"\n  {sym} {s['draft']:30s}  passes: {s['passes']}/{s['attempts']}"
             f"  ({s['pass_rate']*100:.0f}%)  [{cls}]  {s['elapsed_s']}s"
         )
-        # Show failure patterns
         non_pass = [a for a in s["attempts_detail"] if not a["passed"]]
         if non_pass:
             from collections import Counter
             submitted_vals = Counter(str(a["submitted"])[:60] for a in non_pass)
-            top = submitted_vals.most_common(3)
-            for val, cnt in top:
+            for val, cnt in submitted_vals.most_common(3):
                 print(f"      {cnt}× submitted: {val}")
     print()
 

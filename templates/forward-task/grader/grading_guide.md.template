@@ -1,0 +1,20 @@
+# Grading Guidance — Forward Task
+
+<!-- Canonical CLI location: grader/grading_guide.md.
+     Maps to RLS "Grading Guidance" on push. -->
+
+## Correct answer
+
+## Acceptance criteria
+
+<!-- Tolerance + units. Forward tasks usually have a single numeric answer
+     with a tolerance ± a fixed amount or relative percent. -->
+
+## Common near-misses
+
+| Submitted | Why it loses |
+|---|---|
+| `<naive-default-mesh-result>` | <one sentence: default mesh silently unconverged> |
+| `<wrong-solver-result>` | <one sentence: steady-state used where transient was required> |
+
+## Edge cases the judge should know

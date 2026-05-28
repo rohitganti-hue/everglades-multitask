@@ -1,6 +1,8 @@
 # Grading Guidance
 
-<!-- This goes to the LLM judge + the client. The expert OWNS this file. -->
+<!-- Canonical Everglades CLI location: grader/grading_guide.md.
+     Maps to the RLS "Grading Guidance" custom field on push.
+     The expert OWNS this file. The skill must NOT write it. -->
 
 ## Correct answer
 

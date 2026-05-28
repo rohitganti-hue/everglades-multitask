@@ -1,7 +1,10 @@
-"""main.py — your reference solve for a forward task.
+"""solution/main.py — reference solve for a forward task.
+
+Canonical Everglades CLI location. On RLS push, uploaded to the
+"Verification Code" custom field.
 
 Forward tasks don't have an oracle. The model gets simulation input files
-directly and runs the domain tool to produce an output.
+directly (from `simulation/`) and runs the domain tool to produce an output.
 
 INSTRUCTIONS:
   - Use the domain tool (OpenFOAM, FEniCS, ngspice, ORCA, ...).
@@ -14,7 +17,7 @@ import sys
 
 
 def main():
-    # 1. Run the simulation (replace with your tool's invocation)
+    # 1. Run the simulation (replace with your tool's invocation, e.g.):
     # subprocess.run(["pimpleFoam"], cwd="./simulation", check=True)
 
     # 2. Post-process (mesh refinement check, time-averaging, etc.)

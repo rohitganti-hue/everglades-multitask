@@ -4,6 +4,8 @@ A real-world walkthrough drawn from an EG-1 bioinformatics expert's actual May 4
 
 > **Note on domain.** All 3 tasks in this example are EG-1 — same domain. This is the typical pattern: experts ship within their assigned domain, and the skill is configured to one `world_id` per session. The shared scaffolding wins (one `_shared/anndata_oracle_base.py` extending across all 3 drafts) only work because the drafts share a tool family. Cross-domain batching loses these wins and is not the default mode.
 
+> **Note on structure.** Each draft below follows the canonical Everglades CLI structure: `problem.md`, `config.yaml`, `oracle/setup.py`, `solution/main.py` (+ `solution/shortcut.py`), `grader/grading_guide.md`, `golden/expected.json`, `requirements.txt`, `reasoning_trap.md`. The skill scaffolds + ships in this exact layout so drafts are bidirectionally compatible with the `stemcomp run` / `stemcomp grade` CLI sandbox.
+
 ## What the data shows (sequential, before tooling)
 
 The expert created three EG-1 inverse tasks the same day — already trying to work in parallel:

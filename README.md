@@ -116,26 +116,48 @@ Setup wizard prompts for each. Re-run `python3 scripts/setup.py` to update.
 
 ## Anatomy of a draft
 
+Matches the **canonical Everglades CLI task structure** (per master instructions + `Mercor-Intelligence/stem-software` repo) — drafts are interchangeable with the GitHub CLI sandbox.
+
 ```
-~/everglades-drafts/2026-05-28-pk-inverse/
-├── BRIEF.md            # The idea in your words
-├── STATE.md            # Playbook step + decisions
-├── meta.yml            # domain, subdomain, tool, direction, RLS task_id after push
-├── problem.md          # The prompt — YOU write, last
-├── oracle.py           # Hidden system — skill helps scaffold
-├── main.py             # Reference solve — skill helps scaffold
-├── shortcut.py         # Naive solver (MUST fail) — skill helps scaffold
-├── expected.json       # Golden answer + tolerance
-├── grading_guide.md    # Near-miss table — YOU write
-├── reasoning_trap.md   # The naive trap explanation — YOU write
+~/everglades-drafts/2026-05-28-rna-velocity/
+├── problem.md                  # What the model sees — YOU write, last
+├── config.yaml                 # domain, sub_domain, direction, simulator
+├── requirements.txt            # Python deps (RLS: Required Packages)
+├── oracle/
+│   └── setup.py                # HIDDEN system — skill helps scaffold (RLS: Oracle File)
+├── grader/
+│   └── grading_guide.md        # Near-miss table — YOU write (RLS: Grading Guidance)
+├── golden/
+│   └── expected.json           # Golden answer + tolerance (RLS: Golden Response + Tolerance)
+├── solution/
+│   ├── main.py                 # Reference solve — skill helps scaffold (RLS: Verification Code)
+│   └── shortcut.py             # Naive solver — skill-local, NOT uploaded
+├── reasoning_trap.md           # The naive trap — YOU write (RLS: Reasoning Trap field)
+├── BRIEF.md                    # Your idea in your words — skill workflow state
+├── STATE.md                    # Playbook step + decisions — skill workflow state
 └── runs/
     ├── verify_<ts>.json
     ├── shortcut_<ts>.json
     ├── preview_<ts>.json
-    └── taiga_<run_id>.json  # after push + eval
+    └── taiga_<run_id>.json     # after push + eval
 ```
 
-**AI Use Policy:** The skill helps scaffold Python code. The skill does NOT write your prompt, reasoning trap, grading guidance, or explanation. You own the science.
+**Forward tasks** swap `oracle/setup.py` for a `simulation/` directory of model-visible input files.
+
+### File → RLS field mapping (on push)
+
+| Canonical file | RLS field |
+|---|---|
+| `oracle/setup.py` | Oracle File (file upload) |
+| `solution/main.py` | Verification Code (file upload) |
+| `golden/expected.json` | Golden Response + Tolerance |
+| `grader/grading_guide.md` | Grading Guidance |
+| `problem.md` | User Prompt |
+| `config.yaml` (parsed) | Domain, Subdomain, Directionality, Required Tool |
+| `requirements.txt` | Required Packages |
+| `reasoning_trap.md` | Reasoning Trap |
+
+**AI Use Policy:** The skill helps scaffold `oracle/setup.py`, `solution/main.py`, and `solution/shortcut.py`. The skill does NOT write `problem.md`, `reasoning_trap.md`, `grader/grading_guide.md`, or your explanation. **You own the science.**
 
 ## Preview eval — how it works
 

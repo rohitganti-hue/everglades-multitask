@@ -1,4 +1,4 @@
-"""shortcut.py — the deliberately-naive solver for a forward task.
+"""solution/shortcut.py — naive forward solver. Skill-local; NOT uploaded to RLS.
 
 For forward tasks, the trap is usually a default that silently fails:
   - Default mesh (too coarse)

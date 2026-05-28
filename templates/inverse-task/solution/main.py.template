@@ -1,11 +1,14 @@
-"""main.py — your reference solve.
+"""solution/main.py — your reference solve.
 
-This file proves the task is solvable. The grader uses it as reference.
+This is the canonical Everglades CLI location (matches `solution/main.py` in
+the master CLI structure). On RLS push, this file's contents are uploaded to
+the "Verification Code" custom field.
 
 INSTRUCTIONS:
-  - Must use the domain tool listed in meta.yml.
+  - Must use the domain tool listed in config.yaml.
   - Must query the oracle (don't hardcode the hidden parameters).
-  - Final printed line of stdout = the submitted answer.
+  - Final printed line of stdout = the submitted answer. (CLI sandbox `grade`
+    command picks the answer up from there.)
   - Should pass verify.py with the golden answer within tolerance.
 
 CONTRACT for parallel iteration:
@@ -16,6 +19,7 @@ CONTRACT for parallel iteration:
 """
 from __future__ import annotations
 import sys
+from pathlib import Path
 import numpy as np
 
 
@@ -38,9 +42,9 @@ def solve(query_oracle):
 
 
 def main():
-    # Make oracle importable from the draft directory
-    sys.path.insert(0, ".")
-    from oracle import query_oracle
+    # Make oracle importable from the draft directory: `from oracle.setup import query_oracle`
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from oracle.setup import query_oracle  # type: ignore[import-not-found]
 
     answer = solve(query_oracle)
     print(answer)

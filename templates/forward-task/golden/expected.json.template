@@ -1,0 +1,6 @@
+{
+  "answer": null,
+  "tolerance": 0,
+  "unit": "<domain-specific>",
+  "notes": "Forward task golden answer. Tolerance 0 = exact, 0.05 = 5% relative."
+}

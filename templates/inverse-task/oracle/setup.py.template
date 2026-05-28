@@ -1,4 +1,8 @@
-"""oracle.py — HIDDEN system. The model never sees this file.
+"""oracle/setup.py — HIDDEN system. The model never sees this file.
+
+This is the canonical Everglades inverse-task oracle file (matches the master
+CLI structure: `oracle/setup.py`). On RLS push, this file's contents are
+uploaded to the "Oracle File" custom field.
 
 INSTRUCTIONS:
   - Replace HIDDEN_PARAMS with your task's hidden parameters.

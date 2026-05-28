@@ -1,0 +1,10 @@
+# All Python packages your task needs.
+# Maps directly to RLS "Required Packages" field on push.
+# Include numpy/scipy if you use them — they don't count as the Required Tool,
+# but they DO go here.
+
+# Example (replace with your task's deps):
+# numpy
+# scipy
+# scanpy
+# anndata

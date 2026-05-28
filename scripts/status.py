@@ -14,6 +14,7 @@ from pathlib import Path
 
 from config import load as load_config, workspace_root, DOMAIN_WORLDS
 from rls import list_tasks
+import paths as paths_mod
 
 
 def parse_state_md(p: Path) -> dict:
@@ -31,15 +32,17 @@ def parse_state_md(p: Path) -> dict:
     return out
 
 
-def parse_meta(p: Path) -> dict:
+def parse_config_yaml(p: Path) -> dict:
+    """Parse the canonical config.yaml file (per Everglades CLI spec)."""
     if not p.exists():
         return {}
     text = p.read_text()
     out = {}
     for line in text.splitlines():
+        line = line.strip()
         if ":" in line and not line.startswith("#"):
             k, v = line.split(":", 1)
-            out[k.strip()] = v.strip()
+            out[k.strip()] = v.strip().strip('"').strip("'")
     return out
 
 
@@ -50,14 +53,16 @@ def list_drafts() -> list[dict]:
         return drafts
     for d in sorted(root.iterdir()):
         if d.is_dir() and not d.name.startswith("_"):
-            state = parse_state_md(d / "STATE.md")
-            meta = parse_meta(d / "meta.yml")
+            state = parse_state_md(paths_mod.state_md(d))
+            cfg = parse_config_yaml(paths_mod.config_yaml(d))
+            # Determine direction from canonical paths (oracle/setup.py vs simulation/)
+            direction = paths_mod.detect_direction(d)
             drafts.append({
                 "draft": d.name,
-                "name": state.get("name") or meta.get("name", ""),
+                "name": state.get("name") or cfg.get("name", ""),
                 "state": state.get("state", "BRIEFED"),
-                "task_id": meta.get("rls_task_id"),
-                "directionality": meta.get("directionality", "?"),
+                "task_id": cfg.get("rls_task_id"),
+                "directionality": direction if direction != "unknown" else cfg.get("direction", "?"),
             })
     return drafts
 

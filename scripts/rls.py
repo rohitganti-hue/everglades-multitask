@@ -12,12 +12,23 @@ CLI usage:
   python3 rls.py list-tasks --world EG-1
   python3 rls.py get-task <task_id>
   python3 rls.py patch-task <task_id> --field reasoning_trap --value "..."
-  python3 rls.py push-file <task_id> --field oracle_file --path ./oracle.py
+  python3 rls.py push-file <task_id> --field oracle_file --path ./oracle/setup.py
+  python3 rls.py push-draft <draft_dir> --task <task_id>    # uploads from canonical paths
   python3 rls.py dispatch-runner <task_id>
   python3 rls.py transition <task_id> --edge submit_for_review
 
 This is intentionally a thin wrapper. The skill's higher-level commands compose
 multiple calls (e.g., /everglades-push = create + push-file × N + patch × M).
+
+CANONICAL-PATH MAPPING (file -> RLS field):
+  oracle/setup.py            -> oracle_file        (inverse only)
+  solution/main.py           -> verification_code
+  golden/expected.json       -> Golden Response + Tolerance (parsed)
+  grader/grading_guide.md    -> grading_guidance
+  problem.md                 -> User Prompt
+  config.yaml                -> Domain + Subdomain + Directionality + Required Tool (parsed)
+  reasoning_trap.md          -> reasoning_trap
+  requirements.txt           -> packages
 """
 from __future__ import annotations
 
@@ -37,6 +48,7 @@ from config import (
     load as load_config,
 )
 from field_map import FIELD_MAP, semantic_to_field_id
+import paths as paths_mod
 
 
 def _headers(api_key: str) -> dict:
@@ -171,6 +183,84 @@ def dispatch_runner(task_id: str, *, runner_name: str = "STEM Software Runner"):
     return None
 
 
+def push_draft(draft_dir: Path, *, task_id: str) -> dict:
+    """Upload a draft's canonical files to its RLS task.
+
+    Maps the master CLI layout to RLS custom fields exactly:
+      oracle/setup.py            -> oracle_file
+      solution/main.py           -> verification_code
+      grader/grading_guide.md    -> grading_guidance
+      problem.md                 -> user prompt (passed via custom_fields)
+      reasoning_trap.md          -> reasoning_trap
+      requirements.txt           -> packages
+      golden/expected.json       -> Golden Response + Tolerance (parsed)
+      config.yaml                -> Domain + Subdomain + Directionality + Required Tool (parsed)
+    """
+    results = {}
+
+    # 1. File uploads
+    if paths_mod.oracle_setup(draft_dir).exists():
+        s3 = upload_file(paths_mod.oracle_setup(draft_dir))
+        if s3:
+            patch_task(task_id, custom_fields={"oracle_file": [{"file_s3_url": s3}]})
+            results["oracle_file"] = s3
+    if paths_mod.main_py(draft_dir).exists():
+        s3 = upload_file(paths_mod.main_py(draft_dir))
+        if s3:
+            patch_task(task_id, custom_fields={"verification_code": [{"file_s3_url": s3}]})
+            results["verification_code"] = s3
+
+    # 2. Text field PATCHes
+    text_fields = {}
+    if paths_mod.problem_md(draft_dir).exists():
+        # User prompt is a special field — handled via task_prompt_messages on RLS
+        text_fields["_prompt"] = paths_mod.problem_md(draft_dir).read_text()
+    if paths_mod.grading_guide(draft_dir).exists():
+        text_fields["grading_guidance"] = paths_mod.grading_guide(draft_dir).read_text()
+    if paths_mod.reasoning_trap(draft_dir).exists():
+        text_fields["reasoning_trap"] = paths_mod.reasoning_trap(draft_dir).read_text()
+    if paths_mod.requirements_txt(draft_dir).exists():
+        text_fields["packages"] = paths_mod.requirements_txt(draft_dir).read_text()
+
+    # 3. Parse config.yaml
+    cfg_path = paths_mod.config_yaml(draft_dir)
+    if cfg_path.exists():
+        for line in cfg_path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or ":" not in line:
+                continue
+            k, v = [x.strip() for x in line.split(":", 1)]
+            v = v.strip('"').strip("'")
+            if k == "domain": text_fields["domain"] = v
+            elif k in ("sub_domain", "subdomain"): text_fields["subdomain"] = v
+            elif k in ("direction", "directionality"): text_fields["directionality"] = v.capitalize()
+            elif k == "simulator": text_fields["tool"] = v
+
+    # 4. Parse golden/expected.json
+    exp_path = paths_mod.expected_json(draft_dir)
+    if exp_path.exists():
+        try:
+            exp = json.loads(exp_path.read_text())
+            if exp.get("tolerance") is not None:
+                text_fields["tolerance"] = exp["tolerance"]
+            # Golden Response value is set via a separate API; not a custom_field
+            # TODO: confirm API endpoint for setting golden response per RLS docs
+            results["golden_answer_pending"] = str(exp.get("answer"))
+        except Exception as e:
+            results["expected_json_parse_error"] = str(e)
+
+    # Drop the special _prompt key — it's set via a different mechanism
+    prompt_text = text_fields.pop("_prompt", None)
+    if prompt_text:
+        results["prompt_pending"] = "User Prompt is set via task_prompt_messages, not custom_fields. TODO."
+
+    if text_fields:
+        patch_task(task_id, custom_fields=text_fields)
+        results.update({k: "PATCHed" for k in text_fields})
+
+    return results
+
+
 def fetch_run_results(task_id: str) -> dict | None:
     """Fetch the latest 16-model run results from a task's submission history."""
     task = get_task(task_id)
@@ -222,6 +312,10 @@ def main():
     s.add_argument("--world", required=True)
     s.add_argument("--name", default=None)
 
+    s = sub.add_parser("push-draft", help="Upload a draft's canonical files + custom_fields to its RLS task")
+    s.add_argument("draft_dir")
+    s.add_argument("--task", required=True, help="RLS task_id")
+
     s = sub.add_parser("results")
     s.add_argument("task_id")
 
@@ -246,6 +340,8 @@ def main():
     elif args.cmd == "create-task":
         wid = DOMAIN_WORLDS.get(args.world, args.world)
         print(json.dumps(create_task(wid, task_name=args.name), default=str, indent=2))
+    elif args.cmd == "push-draft":
+        print(json.dumps(push_draft(Path(args.draft_dir).expanduser().resolve(), task_id=args.task), default=str, indent=2))
     elif args.cmd == "results":
         print(json.dumps(fetch_run_results(args.task_id), default=str, indent=2))
 

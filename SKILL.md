@@ -148,34 +148,65 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED → TAIGA-
 
 ## Workspace layout
 
+The skill's scaffolds match the **canonical Everglades CLI task structure** byte-for-byte (per the master instructions document and the `Mercor-Intelligence/stem-software` repo). Drafts are tool-portable: you can `stemcomp run` / `stemcomp grade` against any draft as-is.
+
 ```
-~/everglades-drafts/                # pre-push working copies
-├── _shared/                        # for sibling sets (Workflow B)
+~/everglades-drafts/                       # pre-push working copies
+├── _shared/                               # for sibling sets (Workflow B)
 │   ├── anndata_oracle_base.py
 │   └── grading_guide_skeleton.md
-└── <draft-id>/
-    ├── BRIEF.md                    # expert's idea in their words
-    ├── STATE.md                    # current playbook step + decisions
-    ├── meta.yml                    # domain, subdomain, tool, direction, rls_task_id (if pushed)
-    ├── problem.md                  # written LAST per playbook
-    ├── oracle.py                   # Claude-scaffolded, expert owns science
-    ├── main.py
-    ├── shortcut.py                 # deliberately-naive solver
-    ├── expected.json               # answer + tolerance
-    ├── grading_guide.md
-    ├── reasoning_trap.md
-    └── runs/
+└── <draft-id>/                            # CANONICAL CLI STRUCTURE
+    ├── problem.md                         # what the model sees (RLS: User Prompt)
+    ├── config.yaml                        # domain, sub_domain, direction, simulator
+    ├── requirements.txt                   # (RLS: Required Packages)
+    ├── oracle/
+    │   └── setup.py                       # HIDDEN. (RLS: Oracle File)  [INVERSE ONLY]
+    ├── simulation/                        # visible to model              [FORWARD ONLY]
+    │   └── (setup files)
+    ├── grader/
+    │   └── grading_guide.md               # (RLS: Grading Guidance)
+    ├── golden/
+    │   └── expected.json                  # (RLS: Golden Response + Tolerance)
+    ├── solution/
+    │   ├── main.py                        # reference solve (RLS: Verification Code)
+    │   └── shortcut.py                    # naive solver — skill-local, NOT uploaded
+    ├── reasoning_trap.md                  # (RLS: Reasoning Trap field)  — skill addition
+    ├── BRIEF.md                           # expert's idea — skill workflow state
+    ├── STATE.md                           # current playbook step — skill workflow state
+    └── runs/                              # skill-local logs
         ├── verify_<ts>.json
         ├── shortcut_<ts>.json
         ├── preview_<ts>.json
-        └── taiga_<run_id>.json     # only after push
+        └── taiga_<run_id>.json            # only after push
 
-~/everglades-tasks/                 # post-push mirrors
-└── <rls_task_id>/                  # same structure, kept in sync via auto-PATCH
+~/everglades-tasks/                        # post-push mirrors
+└── <rls_task_id>/                         # same structure, kept in sync via auto-PATCH
 
 ~/.everglades/
-└── config.json                     # rls_api_key, anthropic_api_key, world_id, expert_id
+└── config.json                            # rls_api_key, anthropic_api_key, world_id, expert_id
 ```
+
+### File → RLS field mapping (push)
+
+| Canonical file | RLS custom field |
+|---|---|
+| `oracle/setup.py` | Oracle File (file upload) |
+| `solution/main.py` | Verification Code (file upload) |
+| `golden/expected.json` | Golden Response (answer) + Tolerance (numeric) |
+| `grader/grading_guide.md` | Grading Guidance |
+| `problem.md` | User Prompt |
+| `config.yaml → domain, sub_domain, direction, simulator` | Domain, Subdomain, Directionality, Required Tool |
+| `requirements.txt` | Required Packages |
+| `reasoning_trap.md` | Reasoning Trap |
+
+Files NOT pushed to RLS: `BRIEF.md`, `STATE.md`, `solution/shortcut.py`, `runs/*`. These are skill-local.
+
+### Why nested?
+
+Three reasons:
+1. **Bidirectional with the CLI sandbox.** Experts who already use `stemcomp run` / `stemcomp grade` get the same layout — they can move between Claude Code + sandbox without restructuring.
+2. **Auditable RLS push.** Each nested folder maps 1-to-1 to an RLS field — easy to verify the right file went to the right place.
+3. **Future-proof.** If RLS / Taiga add e.g. `examples/` or `tests/` folders, the layout extends naturally.
 
 ## First-run setup
 

@@ -1,4 +1,8 @@
-"""shortcut.py — the deliberately-naive solver.
+"""solution/shortcut.py — the deliberately-naive solver.
+
+NOT part of the canonical Everglades CLI spec. This is a skill-local helper
+that lives alongside main.py so verify + shortcut have symmetric layout. It
+is NOT uploaded to RLS — only main.py goes to the Verification Code field.
 
 This file MUST FAIL against the oracle. If it passes, the task is too easy.
 
@@ -10,11 +14,12 @@ INSTRUCTIONS:
       * Memorized canonical value (e.g., textbook constant)
       * Default convention without checking
       * Ignoring noise / not averaging
-  - Run via shortcut.py; verify catches the FAIL.
+  - Run via /everglades-shortcut; verify catches the FAIL.
   - If shortcut.py passes, harden the task using the 5 strategies.
 """
 from __future__ import annotations
 import sys
+from pathlib import Path
 
 
 def naive_solve(query_oracle):
@@ -30,8 +35,8 @@ def naive_solve(query_oracle):
 
 
 def main():
-    sys.path.insert(0, ".")
-    from oracle import query_oracle
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from oracle.setup import query_oracle  # type: ignore[import-not-found]
     answer = naive_solve(query_oracle)
     print(answer)
 
