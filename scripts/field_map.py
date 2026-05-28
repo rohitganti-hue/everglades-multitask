@@ -14,8 +14,10 @@ FIELD_MAP = {
     "grading_guidance": "field_6a2b00c0923a",
     "packages": "field_9e93e1b24a10",
     "explanation": "field_bdb262162384",
-    "oracle_file": "field_d3feecad1958",
-    "verification_code": "field_f05eba6aa8e7",
+    # Verified across 49 approved inverse tasks: field_f05eba6aa8e7 holds
+    # oracle.py (49/49), field_d3feecad1958 holds main.py/code.py (51/52).
+    "oracle_file": "field_f05eba6aa8e7",
+    "verification_code": "field_d3feecad1958",
 }
 
 REVERSE_FIELD_MAP = {v: k for k, v in FIELD_MAP.items()}
