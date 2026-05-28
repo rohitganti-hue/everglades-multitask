@@ -1,0 +1,23 @@
+# Skill output should never be committed
+~/.everglades/
+~/everglades-drafts/
+~/everglades-tasks/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Secrets — extra paranoia
+*.key
+*.secret
+config.local.json

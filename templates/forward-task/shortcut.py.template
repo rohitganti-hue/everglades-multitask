@@ -1,0 +1,22 @@
+"""shortcut.py — the deliberately-naive solver for a forward task.
+
+For forward tasks, the trap is usually a default that silently fails:
+  - Default mesh (too coarse)
+  - Default solver (steady-state when transient is needed)
+  - Default convention (wrong sign, wrong denominator)
+  - No convergence check
+
+This file must FAIL — confirm that the trap actually traps.
+"""
+from __future__ import annotations
+import sys
+
+
+def naive_solve():
+    # The naive default-mesh / default-solver path
+    answer = ...  # TODO
+    return answer
+
+
+if __name__ == "__main__":
+    print(naive_solve())

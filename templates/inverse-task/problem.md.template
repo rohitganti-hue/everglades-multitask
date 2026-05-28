@@ -1,0 +1,39 @@
+<!--
+problem.md — what the model sees.
+
+WRITE THIS LAST (Playbook Step 8). Do NOT draft this before the answer is
+locked, the oracle is calibrated, and verify + shortcut + preview have all
+been run.
+
+CHECKLIST before saving:
+  [ ] No method names (DMRG, AlphaFold2, ΔSCF, ridge regression, etc.)
+  [ ] No canonical targets (formaldehyde, 2D Ising critical, repressilator, ...)
+  [ ] No strategy hints ("start by measuring ...", "the best approach is ...")
+  [ ] Answer format explicitly stated (decimal places, units, separator)
+  [ ] Explicit instruction to call submit_answer(value)
+  [ ] If a convention matters (sign, gauge, denominator), it's stated.
+
+The expert OWNS this file. The skill MUST NOT write it.
+-->
+
+# Task setup
+
+<!-- One paragraph describing the system the model is investigating. -->
+
+# What you can use
+
+You have access to a hidden `query_oracle(mode, parameters)` function. Call
+`query_oracle(mode="help", parameters={})` to discover available measurement
+modes and your query budget.
+
+# Your task
+
+<!-- One paragraph stating exactly what to determine, in what format, with
+     what precision. -->
+
+# Output format
+
+<!-- e.g., "Comma-separated values to 2 decimal places, in this order:
+     m, b, phi, alpha" -->
+
+Submit your answer via `submit_answer(value)`.

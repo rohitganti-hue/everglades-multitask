@@ -1,0 +1,69 @@
+"""oracle.py — HIDDEN system. The model never sees this file.
+
+INSTRUCTIONS:
+  - Replace HIDDEN_PARAMS with your task's hidden parameters.
+  - Replace _system_observation with the domain physics that produces observations.
+  - Add at least 2 modes. One must be `help` (lists modes but doesn't recommend).
+  - Add noise calibrated to the domain (gaussian, 1/f, shot, etc.).
+  - Set a budget. The model should not be able to brute-force every mode.
+  - The oracle MUST return observations, not judgments. No accepted/rejected,
+    no close-enough. If you find yourself writing `check_*` or `validate_*`,
+    stop — that's a grader, not an instrument. (See: Strategy 3 / Failure Mode 2.)
+"""
+from __future__ import annotations
+import numpy as np
+
+# === Hidden parameters (the thing the model must infer) ===
+HIDDEN_PARAMS = {
+    # Replace these with your task's hidden values
+    "param_1": 1.23,
+    "param_2": 0.45,
+}
+
+# === Budget enforcement ===
+_RNG = np.random.default_rng(seed=42)
+_BUDGET = 30
+_used = 0
+
+
+def _system_observation(mode: str, params: dict):
+    """The actual physics — replace with your domain.
+
+    Real implementations import the domain tool here (scanpy, pyscf, ngspice,
+    obspy, etc.) and return the natural observation a real instrument would.
+    """
+    raise NotImplementedError("Replace with domain physics.")
+
+
+def _noise(shape, sigma: float):
+    return _RNG.normal(0, sigma, shape)
+
+
+def query_oracle(mode: str, parameters: dict | None = None):
+    """The PUBLIC interface the model can call. Routes to internal modes."""
+    global _used
+    parameters = parameters or {}
+
+    if mode == "help":
+        # Help mode lists modes + parameter signatures.
+        # DO NOT recommend a mode. DO NOT mention what each measures in
+        # domain-physics terms (that's a method-name leak).
+        return {
+            "modes": {
+                "mode_a": "{...} -> {observation: array}",
+                "mode_b": "{...} -> {observation: array}",
+            },
+            "budget_remaining": _BUDGET - _used,
+        }
+
+    _used += 1
+    if _used > _BUDGET:
+        return {"error": "budget exceeded"}
+
+    obs = _system_observation(mode, parameters)
+    # Add domain-realistic noise. Tune sigma to your domain — too much noise
+    # makes the task impossible; too little makes single-query inference trivial.
+    if isinstance(obs, np.ndarray):
+        obs = obs + _noise(obs.shape, sigma=0.02 * np.abs(obs).mean())
+
+    return {"observation": obs.tolist() if isinstance(obs, np.ndarray) else obs, "unit": "<domain-specific>"}

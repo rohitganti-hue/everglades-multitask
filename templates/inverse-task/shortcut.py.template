@@ -1,0 +1,40 @@
+"""shortcut.py — the deliberately-naive solver.
+
+This file MUST FAIL against the oracle. If it passes, the task is too easy.
+
+INSTRUCTIONS:
+  - Implement the most likely naive solve (the one the trap targets).
+  - Common shortcuts:
+      * Single-mode query, no cross-checks
+      * Largest-signal ranking
+      * Memorized canonical value (e.g., textbook constant)
+      * Default convention without checking
+      * Ignoring noise / not averaging
+  - Run via shortcut.py; verify catches the FAIL.
+  - If shortcut.py passes, harden the task using the 5 strategies.
+"""
+from __future__ import annotations
+import sys
+
+
+def naive_solve(query_oracle):
+    """The wrong path you expect weak solvers to take.
+
+    Example: query only one mode, average naively, submit the first
+    plausible-looking value.
+    """
+    obs = query_oracle("mode_a", {"...": "..."})
+    # Naive single-mode inference
+    naive_answer = ...  # TODO
+    return naive_answer
+
+
+def main():
+    sys.path.insert(0, ".")
+    from oracle import query_oracle
+    answer = naive_solve(query_oracle)
+    print(answer)
+
+
+if __name__ == "__main__":
+    main()

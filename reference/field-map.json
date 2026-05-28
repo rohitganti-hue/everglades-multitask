@@ -1,0 +1,29 @@
+{
+  "_comment": "RLS custom_field UUIDs for the STEM Software campaign. These are stable per-campaign — derived by hydrating approved tasks and inspecting custom_fields.",
+  "domain": "field_9b4032885629",
+  "subdomain": "field_32989c76ab03",
+  "directionality": "field_4199620c61b3",
+  "tool": "field_19a38bddb2ad",
+  "tolerance": "field_d0d1331db6c7",
+  "reasoning_trap": "field_00727231ef43",
+  "grading_guidance": "field_6a2b00c0923a",
+  "packages": "field_9e93e1b24a10",
+  "explanation": "field_bdb262162384",
+  "oracle_file": "field_d3feecad1958",
+  "verification_code": "field_f05eba6aa8e7",
+  "_campaign_id": "camp_591445dee0d942d6827f724012d2f684",
+  "_company_id": "comp_2fa4115109d741cd94a3c409ed89e61f",
+  "_approved_status_ids": ["ce5f656b-6b79-4913-b0ba-37df93dc9eb1", "done"],
+  "_domain_worlds": {
+    "Samples": "world_73b237efc96b4b4fbf736105946cbcb2",
+    "EG-1": "world_95d559681bc0411db772f38393216250",
+    "EG-2": "world_3a65693c950c42a9bf77ca7ada00d92e",
+    "EG-3": "world_2f339a331c2b4e42af45b616e948b577",
+    "EG-4": "world_c103da8ca544493c9c9ebeb12fff4235",
+    "EG-5": "world_87f397299fe44817b9750c7aa72e4dd2",
+    "EG-6": "world_a7697c54b3dd42c2bd9dc45c1580f260",
+    "EG-7": "world_f359f5689aaa46ff952b67239580b7c3",
+    "EG-8": "world_2e47c25ea4af477999cfe545fa279837",
+    "EG-9": "world_71cbe60f81ec43d79cacef9fa764ba19"
+  }
+}

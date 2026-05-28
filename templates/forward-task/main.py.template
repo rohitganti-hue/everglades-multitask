@@ -1,0 +1,28 @@
+"""main.py — your reference solve for a forward task.
+
+Forward tasks don't have an oracle. The model gets simulation input files
+directly and runs the domain tool to produce an output.
+
+INSTRUCTIONS:
+  - Use the domain tool (OpenFOAM, FEniCS, ngspice, ORCA, ...).
+  - Verify against literature or independent setup.
+  - Final printed line of stdout = the submitted answer.
+"""
+from __future__ import annotations
+import subprocess
+import sys
+
+
+def main():
+    # 1. Run the simulation (replace with your tool's invocation)
+    # subprocess.run(["pimpleFoam"], cwd="./simulation", check=True)
+
+    # 2. Post-process (mesh refinement check, time-averaging, etc.)
+    answer = ...  # TODO
+
+    # 3. Print final answer as last stdout line
+    print(answer)
+
+
+if __name__ == "__main__":
+    main()

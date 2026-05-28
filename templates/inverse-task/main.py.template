@@ -1,0 +1,50 @@
+"""main.py — your reference solve.
+
+This file proves the task is solvable. The grader uses it as reference.
+
+INSTRUCTIONS:
+  - Must use the domain tool listed in meta.yml.
+  - Must query the oracle (don't hardcode the hidden parameters).
+  - Final printed line of stdout = the submitted answer.
+  - Should pass verify.py with the golden answer within tolerance.
+
+CONTRACT for parallel iteration:
+  - If you define `solve(query_oracle)` as a function, the skill can call it
+    directly during cross-sibling degeneracy checks.
+  - Otherwise, the skill falls back to running the script via subprocess and
+    reading the final stdout line.
+"""
+from __future__ import annotations
+import sys
+import numpy as np
+
+
+def solve(query_oracle):
+    """Reference solve. Receives the oracle function. Returns the answer."""
+    # 1. Discover modes
+    help_info = query_oracle("help", {})
+
+    # 2. Strategic queries — choose modes that inform the hidden params
+    #    Replace this with the actual inference logic for your task.
+    obs_a = query_oracle("mode_a", {"...": "..."})
+    obs_b = query_oracle("mode_b", {"...": "..."})
+
+    # 3. Invert from observations to parameters
+    #    Replace with the actual inference (scipy.optimize, signal processing,
+    #    constraint solving, ranking, etc.)
+    answer = ...  # TODO: compute from obs_a, obs_b
+
+    return answer
+
+
+def main():
+    # Make oracle importable from the draft directory
+    sys.path.insert(0, ".")
+    from oracle import query_oracle
+
+    answer = solve(query_oracle)
+    print(answer)
+
+
+if __name__ == "__main__":
+    main()

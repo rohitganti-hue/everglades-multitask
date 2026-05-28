@@ -1,0 +1,6 @@
+{
+  "answer": null,
+  "tolerance": 0,
+  "unit": "<domain-specific>",
+  "notes": "Replace 'answer' with your golden answer string or number. Tolerance: 0 = exact match, 0.05 = 5% relative tolerance."
+}
