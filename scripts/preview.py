@@ -14,7 +14,7 @@ CLI:
 
 This is the cheapest, fastest signal an expert can get on whether their task
 will pass the ≤4/16 Taiga bar — typically catches "too easy" and "broken"
-in ~3 minutes for $3 vs ~40 minutes for ~$10 of real Taiga.
+in ~3 minutes vs ~40 minutes for a real Taiga 16-model run.
 """
 from __future__ import annotations
 

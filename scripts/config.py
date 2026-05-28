@@ -37,7 +37,7 @@ CAMPAIGN_ID = "camp_591445dee0d942d6827f724012d2f684"
 COMPANY_ID = "comp_2fa4115109d741cd94a3c409ed89e61f"
 RLS_BASE = "https://api.studio.mercor.com"
 
-# Approved/done status IDs (filtered to keep Sahar-style approvals visible)
+# Approved/done status IDs across worlds
 APPROVED_STATUSES = {
     "ce5f656b-6b79-4913-b0ba-37df93dc9eb1",
     "done",

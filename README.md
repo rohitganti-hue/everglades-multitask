@@ -7,7 +7,7 @@ A Claude Code skill that lets Project Everglades experts construct, calibrate, a
 - **Workflow A** — start with N distinct ideas, scaffold N drafts in parallel, batch preview, batch push to RLS, batch dispatch Taiga
 - **Workflow B** — start with one idea, expand to 2–3 orthogonal siblings with a degeneracy check
 - **Workflow C** — N tasks back from review; aggregate feedback, detect cross-task patterns, batch resubmit
-- **Preview eval** — Opus 4.7 × 8 attempts via Anthropic API + tool-use, runs against your local `oracle.py`. ~$3 vs ~$10 for real Taiga, 90s vs 40 min
+- **Preview eval** — Opus 4.7 × 8 attempts via Anthropic API + tool-use, runs against your local `oracle.py`. ~90s vs ~40 min for a real Taiga 16-model run
 - **Opinionated state machine** — every draft has a `STATE.md`; skill won't let you skip a Playbook step
 - **Lint** — leak-checker for `problem.md` (method names, canonical targets, strategy hints) and `oracle.py` (judgment-style modes, missing budget)
 
@@ -89,7 +89,7 @@ everglades-multitask/
 │   ├── inverse-task/                # oracle.py / main.py / shortcut.py / etc. scaffolds
 │   └── forward-task/
 └── examples/
-    └── sahar-walkthrough.md         # Real case study using approved EG-1 tasks
+    └── example-walkthrough.md       # Real anonymized walkthrough on approved EG-1 tasks
 ```
 
 ## Config
@@ -144,11 +144,11 @@ Pass rate interpretation:
 - **3–4/8** — BORDERLINE; harden once
 - **5+/8** — TOO EASY; transcript_analyzer suggests which strategy to apply
 
-Cost: ~$3 per preview, ~90 seconds wall-clock with `--attempts 8`.
+Roughly **90 seconds wall-clock** with `--attempts 8`, vs ~40 minutes for a real Taiga 16-model run.
 
-## Sahar case study
+## Example walkthrough
 
-See [`examples/sahar-walkthrough.md`](examples/sahar-walkthrough.md) for a real walkthrough using Sahar E's 6 approved EG-1 bioinformatics tasks — including the duplicate task pair (`xm0vffa1` + `w49sa943`) that the degeneracy check would have caught at scaffold time.
+See [`examples/example-walkthrough.md`](examples/example-walkthrough.md) for a real anonymized walkthrough drawn from an EG-1 bioinformatics expert's actual May 4–8 sprint — including the duplicate task pair (`xm0vffa1` + `w49sa943`) that the degeneracy check would have caught at scaffold time.
 
 ## Status
 

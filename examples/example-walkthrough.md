@@ -1,10 +1,10 @@
-# Case Study — Sahar E's EG-1 Bioinformatics Sprint
+# Example — A 3-task EG-1 Bioinformatics Sprint
 
-A real-world walkthrough showing how `everglades-multitask` would have changed Sahar's actual May 4–8 shipping cadence.
+A real-world walkthrough drawn from an EG-1 bioinformatics expert's actual May 4–8 shipping batch. Anonymized; the task IDs reference approved tasks visible in the Failure Modes Bank.
 
-## Her actual shipping pattern (May 4–8, 2026)
+## What the data shows (sequential, before tooling)
 
-Sahar created **three EG-1 inverse tasks on the same day** — already trying to work in parallel:
+The expert created three EG-1 inverse tasks the same day — already trying to work in parallel:
 
 | Task | Subdomain | Tool | Created | Approved | Round-trip |
 |---|---|---|---|---|---|
@@ -21,7 +21,7 @@ Without tooling, two of three tasks took 4 days to ship. That delay was almost e
 
 ## The April duplicate that the skill would have caught
 
-Look at Sahar's April 17–18:
+Two earlier tasks in this expert's history (April 17–18):
 
 | Task | Subdomain | Tool | Trap text |
 |---|---|---|---|
@@ -37,12 +37,12 @@ Look at Sahar's April 17–18:
               join; what does draft-2 do differently? Or are these the same task?
 ```
 
-## What the May 4 batch would have looked like with the skill
+## The same May 4 batch with the skill
 
 ```
 9:00 AM   > /everglades-ideate 3
 
-Sahar:
+Expert:
   1) EG-1, ATAC-seq, ALS iPSC subtype-specific signal vs covariates
   2) EG-1, single-cell biomarker, AD PBMC PANEL_B vs PANEL_A trap
   3) EG-1, RNA velocity inverse, colorectal cancer reversion candidate
@@ -56,7 +56,7 @@ Skill: all 3 are scanpy/AnnData. Scaffolds shared module
 9:25 AM   All 3 drafts at SCAFFOLDED.
 
 9:40 AM   > /everglades-preview-batch
-          Opus 4.7 × 8 × 3 = 24 parallel attempts. ~$18, ~3 min.
+          Opus 4.7 × 8 × 3 = 24 parallel attempts. ~3 min wall-clock.
 
           draft-1 ATAC-seq:        2/8 ✓ IN RANGE
           draft-2 Single-cell-AD:  6/8 ✗ TOO EASY
@@ -81,7 +81,7 @@ Skill: all 3 are scanpy/AnnData. Scaffolds shared module
                  Suggests: replace module_score with two modes —
                  panel_baseline_expression + perturbation_response —
                  model must combine to get the disease signature.
-          Sahar: edits oracle.py with skill's guidance.
+          Expert: edits oracle.py with skill's guidance.
           Re-preview: 2/8 ✓ IN RANGE
 
 10:00 AM  All 3 in range. > /everglades-push-all
@@ -109,9 +109,9 @@ Skill: all 3 are scanpy/AnnData. Scaffolds shared module
 | Reviewer revision | 2-3 days waiting + multiple round trips | 1 batched revision session |
 | **Total active time** | **~10-15 hours over 4 days** | **~3 hours, single day** |
 
-## The N = 6 case (her full April–May portfolio)
+## The N = 6 portfolio case
 
-Sahar's 6 approved tasks naturally re-organize into 3 sibling sets:
+This expert's 6 approved EG-1 tasks naturally re-organize into 3 sibling sets:
 
 - **Workflow B batch 1**: ATAC-seq subtype + Single-cell-AD biomarker (siblings: both "ranked-by-largest-signal" trap family)
 - **Workflow B batch 2**: RNA velocity + Spatial single-cell (siblings: both "naive trajectory inference" trap family)
@@ -124,15 +124,15 @@ Three sibling sets, each shipped in a single focused day = **3 days total instea
 | Win | Mechanism |
 |---|---|
 | Shared scaffolding | All 3 May-4 tasks use scanpy/AnnData. Skill generates a shared `_shared/anndata_oracle_base.py` once, extends per-draft. |
-| Preview catches "too easy" pre-Taiga | Opus 4.7 × 8 attempts via API. 90s + $3 instead of 40 min + $10 of Taiga. |
+| Preview catches "too easy" pre-Taiga | Opus 4.7 × 8 attempts via API. ~90s vs ~40 min of Taiga. |
 | Async Taiga dispatch | 3 Taiga runs in 50 min wall-clock vs 2+ hrs serial. |
-| Cross-task degeneracy check | Would have caught Sahar's April duplicate (xm0vffa1 + w49sa943) before either was shipped. |
+| Cross-task degeneracy check | Would have caught the April duplicate pair (xm0vffa1 + w49sa943) before either was shipped. |
 | Transcript-driven hardening | Skill analyzes preview transcripts and points at the specific oracle mode that's leaking. Turns "5+/16 try again" into "split mode X". |
 | Cross-task reviewer feedback patterns | When 2 of 3 tasks come back with the same class of feedback, the skill flags it as one calibration gap, not 3 fixes. |
 
 ## N-task scaling
 
-| N tasks | Sequential cost | Parallel cost (skill) | Speedup |
+| N tasks | Sequential wall-time | Parallel wall-time (skill) | Speedup |
 |---|---|---|---|
 | 1 | ~4 hrs | ~2.5 hrs | 1.6× |
 | 3 | ~12 hrs | ~3 hrs | 4× |

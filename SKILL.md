@@ -173,7 +173,7 @@ python3 ~/.claude/skills/everglades-multitask/scripts/setup.py
 
 Prompts for:
 - RLS API key (from `~/Desktop/Brain/Everglades/EVERGLADES_KNOWLEDGE.md` or RLS profile page)
-- Anthropic API key (for preview evals — Opus 4.7 × 8 attempts ≈ $3 per preview)
+- Anthropic API key (for preview evals — Opus 4.7 × 8 attempts per preview)
 - Domain world ID (`world_95d559681bc0411db772f38393216250` for EG-1 Bioinformatics, etc.)
 - Expert user ID (from RLS profile)
 
@@ -214,11 +214,11 @@ When the expert invokes you, follow this loop:
 | `scripts/degeneracy.py` | Cross-sibling degeneracy check |
 | `scripts/status.py` | Print unified status table |
 
-## Examples — Sahar's pattern
+## Example — a 3-task EG-1 batch
 
-Sahar E shipped 6 EG-1 bioinformatics inverse tasks over 4 weeks, all sequential. On May 4 she created 3 tasks the same day (ATAC-seq + Single-cell-AD + RNA velocity) — natural Workflow A territory. Two of those took 4 days each to ship.
+An EG-1 bioinformatics expert shipped 6 inverse tasks over 4 weeks, all sequential. On one May 4 day they created 3 tasks at once (ATAC-seq + Single-cell-AD + RNA velocity) — natural Workflow A territory. Two of those took 4 days each to ship.
 
-If she had this skill on May 4:
+With this skill on that same batch:
 
 ```
 9:00 AM    /everglades-ideate 3

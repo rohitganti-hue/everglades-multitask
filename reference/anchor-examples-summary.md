@@ -32,16 +32,16 @@ EG-1 makes up 57% of approved tasks. Common patterns:
 
 1. **AnnData + scanpy** — load synthetic single-cell data; query modes return
    expression panels or summary statistics
-2. **Multi-omics integration trap** — Sahar's pattern: rank by a "permissive
+2. **Multi-omics integration trap** — observed pattern: rank by a "permissive
    integrated score" → wrong; require row-level decomposition → right
 3. **PBMC perturbation candidate set** — 6 candidates, oracle returns
    single-cell summaries per candidate; trap = whole-PBMC summary
 4. **Cancer genomics VAF distribution** — PySAM/BAM file, model reads VCF;
    trap = take max VAF cluster
 
-## Sahar's actual approved tasks (case study)
+## EG-1 approved-task case examples
 
-The skill's scaffolding draws from these as concrete examples:
+The skill's scaffolding draws from these real approved tasks as concrete patterns to adapt:
 
 - `Task xm0vffa1` / `w49sa943` — SingleCell, "permissive integrated score" trap.
   ⚠ These two are near-duplicates — `/everglades-degeneracy-check` would have
