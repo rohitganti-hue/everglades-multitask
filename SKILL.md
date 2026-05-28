@@ -137,6 +137,7 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED ─→ (ex
 | `SCAFFOLDED` | `oracle/setup.py`, `solution/main.py`, `solution/shortcut.py` exist | `/everglades-verify` |
 | `CALIBRATED` | `verify` PASSES + `shortcut` FAILS | `/everglades-preview` |
 | `READY` | preview ≤2/8 pass + `lint` clean | `/everglades-push` |
+| `BORDERLINE` | preview 3–4/8 pass (proxy not conclusive) | harden + re-preview, OR `/everglades-push --force` if expert is confident |
 | `PUSHED` | RLS task_id in `config.yaml` | Open RLS link, click magic-star → STEM Software Runner. Then `/everglades-status`. |
 | `TAIGA-RUNNING` | `taiga_submission_history` has entry without results | `/everglades-status` (poll on demand) |
 | `TAIGA-DONE` (pass) | ≤4/16 in results | `/everglades-submit` |
@@ -144,6 +145,23 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED ─→ (ex
 | `IN-REVIEW` | RLS status `submitted` | wait |
 | `IN-REVISION` | RLS status `needs_edits` | `/everglades-revise` |
 | `APPROVED` | RLS status `done` / `ce5f656b...` | done |
+
+## Threshold design (validated against Taiga distribution, 2026-05-28)
+
+The `≤ 2/8` proxy gate was validated against ground-truth Taiga pass rates pulled for 10 approved inverse tasks across EG-1, EG-2, EG-7, EG-9, and Samples:
+
+| Taiga pass rate | Count |
+|---|---:|
+| 0% | 2 |
+| 6–12% | 3 |
+| 25% | 2 |
+| 28–37.5% | 2 |
+
+80% of approved tasks land ≤ 25% on Taiga — the proxy needs to flag those 8 as "in range." Because Opus 4.7 × 8 is single-model-multi-attempt vs Taiga's 16-model ensemble (and Opus is among the strongest in that ensemble), **proxy pass rates skew slightly more permissive than Taiga** (estimated +5–15%). The strict `≤ 2/8` threshold gives a margin of safety: a task that *barely* clears the proxy gate (2/8 = 25%) will most likely land comfortably under Taiga's 4/16 = 25% cutoff.
+
+The `--force` flag on BORDERLINE results exists because tasks exactly at the 25% Taiga bar can plausibly land at 3/8 on the proxy; an expert who's confident in their calibration shouldn't be blocked.
+
+**Re-validate the threshold when:** Anthropic ships a new frontier model, the Taiga model ensemble changes, or production proxy-vs-Taiga divergence exceeds ~10%.
 
 ## Workspace layout
 

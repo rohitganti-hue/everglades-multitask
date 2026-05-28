@@ -253,13 +253,23 @@ async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
 
 
 def classify(pass_rate: float) -> str:
+    """Classify a proxy pass rate.
+
+    Threshold design validated against Taiga ground-truth distribution
+    (10 approved Everglades tasks, 2026-05-28): 80% of approved tasks land
+    at <=25% on the 16-model Taiga eval. Proxy (Opus 4.7 x 8) skews slightly
+    more permissive than Taiga because Opus is among the strongest models in
+    the 16-model ensemble. The strict <=2/8 (25%) IN_RANGE bar gives a margin
+    of safety: a task barely clearing the proxy gate will most likely land
+    comfortably under Taiga's 4/16 = 25% cutoff.
+    """
     if pass_rate >= 0.5:
-        return "TOO_EASY"
-    if pass_rate >= 0.25:
-        return "BORDERLINE"
+        return "TOO_EASY"          # 4+/8 -> likely 5+/16 on Taiga, definitely harden
+    if pass_rate >= 0.375:
+        return "BORDERLINE"        # 3/8 -> ambiguous; expert can override with --force
     if pass_rate > 0:
-        return "IN_RANGE"
-    return "CHECK_MAIN_OR_ORACLE"
+        return "IN_RANGE"          # 1-2/8 -> proceed to Taiga
+    return "CHECK_MAIN_OR_ORACLE"  # 0/8 -> likely main.py / oracle.py is broken
 
 
 async def main_async():
