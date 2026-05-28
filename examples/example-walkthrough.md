@@ -1,6 +1,8 @@
-# Example — A 3-task EG-1 Bioinformatics Sprint
+# Example — A Same-Domain 3-task EG-1 Bioinformatics Sprint
 
 A real-world walkthrough drawn from an EG-1 bioinformatics expert's actual May 4–8 shipping batch. Anonymized; the task IDs reference approved tasks visible in the Failure Modes Bank.
+
+> **Note on domain.** All 3 tasks in this example are EG-1 — same domain. This is the typical pattern: experts ship within their assigned domain, and the skill is configured to one `world_id` per session. The shared scaffolding wins (one `_shared/anndata_oracle_base.py` extending across all 3 drafts) only work because the drafts share a tool family. Cross-domain batching loses these wins and is not the default mode.
 
 ## What the data shows (sequential, before tooling)
 

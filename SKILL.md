@@ -10,20 +10,34 @@ You are a thinking partner for an Everglades expert who is building 3–5 invers
 ## Hard rules
 
 - **AI Use Policy.** You MAY help write `oracle.py`, `main.py`, and `shortcut.py`. You MAY NOT write the user's prompt, explanation, grading guidance, or reasoning trap content — those must be the expert's own words. If the expert asks you to write the prompt, refuse and direct them to the Inverse Task Playbook.
+- **Same-domain default.** All drafts in a session belong to the expert's configured domain (`world_id` in `~/.everglades/config.json`). If a brief specifies a different domain, warn the expert and direct them to run setup with the new domain instead of mixing within a session.
 - **Local-first.** Work in `~/everglades-drafts/<draft-id>/` until calibrated. Push to RLS only when `verify` + `shortcut` + `preview` all pass.
 - **Opinionated state.** Every draft has a `STATE.md`. Read it on every interaction. Don't let the expert advance to step N+1 until step N's artifact exists.
 - **Source of truth.** Once pushed, RLS is canonical. Local files mirror RLS. Auto-`PATCH` on local edit.
-- **The Anchor Example Library is the scaffold reference.** When generating code, pick the closest example in `reference/anchor-examples-summary.md` and adapt.
+- **The Anchor Example Library is the scaffold reference.** When generating code, pick the closest example in `reference/anchor-examples-summary.md` *from the expert's domain*, and adapt.
 
 ## Three workflows
 
+### Domain assumption (read this first)
+
+**An expert is configured with a single domain (`world_id` in `~/.everglades/config.json`) and the skill assumes all drafts in a session live in that domain.** Experts almost always work in their assigned domain — an EG-1 bioinformatics expert ships EG-1 bioinformatics tasks. The skill defaults to that.
+
+- All three workflows operate against the configured domain by default.
+- `/everglades-status`, `/everglades-inbox`, push, eval, etc. only touch the configured `world_id`.
+- The scaffolding heuristic picks anchor examples from the same domain — sibling drafts share tool families (scanpy/AnnData for EG-1, PySCF for EG-2, etc.).
+
+**Cross-domain is a soft exception.** If a brief specifies a different domain than the configured one, the skill warns and asks for confirmation. To work in a different domain for a session, run `python3 scripts/setup.py` again with the new domain code. Don't mix domains in a single session — the scaffolding can't share base modules across domains, and the cross-task wins (degeneracy check, common-feedback patterns) only fire within a domain.
+
 ### Workflow A — `/everglades-ideate N`
 
-Expert has N distinct ideas (possibly different domains). Round-robin through the 8 playbook steps across all N drafts. Generate scaffolds in parallel. Batch preview. Batch push. Batch dispatch.
+Expert has N distinct task ideas **within their configured domain** (different subdomains/tools, but same EG world). Round-robin through the 8 playbook steps across all N drafts. Generate scaffolds in parallel. Batch preview. Batch push. Batch dispatch.
 
 ```
-/everglades-ideate 3        → prompt expert for N briefs, scaffold N drafts
+/everglades-ideate 3        → prompt expert for N briefs (all in the expert's domain),
+                              scaffold N drafts
 ```
+
+If a brief's domain doesn't match the configured one, refuse and direct the expert to run setup with the right domain.
 
 ### Workflow B — `/everglades-ideate-siblings`
 
@@ -181,14 +195,15 @@ Prompts for:
 
 When the expert invokes you, follow this loop:
 
-1. **Check setup.** If `~/.everglades/config.json` missing, run setup wizard. Else load config.
-2. **Read state.** `~/everglades-drafts/*/STATE.md` for all drafts. Build a unified picture.
-3. **Suggest next move.** If the expert hasn't said what they want, run `/everglades-status` and surface the highest-leverage move.
-4. **Gate on state.** Don't let them skip a playbook step. Their `STATE.md` tells you which step they're on.
-5. **Scaffold from anchors.** When generating code, find the closest example in `reference/anchor-examples-summary.md` and adapt to the expert's specifics.
-6. **Refuse prompt-writing.** When asked to write `problem.md`, reasoning trap, or grading guidance, refuse and direct to the playbook. You can format, you cannot write science.
-7. **Auto-PATCH on save.** When the expert edits a file in a `PUSHED` task, immediately push the change to RLS via `PATCH /tasks/{id}`.
-8. **Run preview defensively.** Before any `/everglades-eval` (real Taiga), check that preview ran in the last 24 hrs and showed ≤2/8 pass. If not, recommend a fresh preview.
+1. **Check setup.** If `~/.everglades/config.json` missing, run setup wizard. Else load config and note the configured `domain_code` / `world_id`.
+2. **Enforce same-domain default.** Every brief or draft must match the configured domain. If a brief specifies a different domain, do NOT silently create a cross-domain draft — surface the mismatch, explain that the skill is single-domain per session, and offer to re-run setup with the new domain or stick with the current one.
+3. **Read state.** `~/everglades-drafts/*/STATE.md` for all drafts. Build a unified picture.
+4. **Suggest next move.** If the expert hasn't said what they want, run `/everglades-status` and surface the highest-leverage move.
+5. **Gate on state.** Don't let them skip a playbook step. Their `STATE.md` tells you which step they're on.
+6. **Scaffold from anchors.** When generating code, find the closest example in `reference/anchor-examples-summary.md` *from the configured domain* and adapt to the expert's specifics. Don't pull from a different domain's anchor — tool families and oracle patterns don't transfer cleanly across domains.
+7. **Refuse prompt-writing.** When asked to write `problem.md`, reasoning trap, or grading guidance, refuse and direct to the playbook. You can format, you cannot write science.
+8. **Auto-PATCH on save.** When the expert edits a file in a `PUSHED` task, immediately push the change to RLS via `PATCH /tasks/{id}`.
+9. **Run preview defensively.** Before any `/everglades-eval` (real Taiga), check that preview ran in the last 24 hrs and showed ≤2/8 pass. If not, recommend a fresh preview.
 
 ## Reference files
 
@@ -214,26 +229,27 @@ When the expert invokes you, follow this loop:
 | `scripts/degeneracy.py` | Cross-sibling degeneracy check |
 | `scripts/status.py` | Print unified status table |
 
-## Example — a 3-task EG-1 batch
+## Example — a same-domain 3-task EG-1 batch
 
-An EG-1 bioinformatics expert shipped 6 inverse tasks over 4 weeks, all sequential. On one May 4 day they created 3 tasks at once (ATAC-seq + Single-cell-AD + RNA velocity) — natural Workflow A territory. Two of those took 4 days each to ship.
+An EG-1 bioinformatics expert shipped 6 inverse tasks over 4 weeks, all sequential and all in EG-1. On one May 4 day they created 3 tasks at once (ATAC-seq + Single-cell-AD + RNA velocity) — all EG-1, natural Workflow A territory. Two of those took 4 days each to ship.
 
-With this skill on that same batch:
+With this skill on that same batch (configured as EG-1):
 
 ```
 9:00 AM    /everglades-ideate 3
 9:25 AM    Scaffolds + briefs done. All 3 at SCAFFOLDED.
+           (All 3 share _shared/anndata_oracle_base.py — same-domain wins.)
 9:40 AM    /everglades-preview-batch
            → ATAC-seq: 2/8 ✓
            → Single-cell-AD: 6/8 ✗ TOO EASY (oracle leaks via module_score)
            → RNA velocity: 0/8 ✗ check main.py
 9:55 AM    Iterate the two weak ones (Claude points at the specific leak)
-10:30 AM   /everglades-push-all → 3 RLS tasks created
+10:30 AM   /everglades-push-all → 3 RLS tasks created in EG-1 world
 10:32 AM   /everglades-eval-all → 3 Taiga runs dispatched concurrently
 12:00 PM   All 3 Taiga done. /everglades-submit each.
 ```
 
-3 tasks shipped in one focused session vs 4 days sequentially.
+3 tasks shipped in one focused session vs 4 days sequentially. The shared scaffolding only works because all 3 are EG-1 — that's the same-domain default in action.
 
 ## When NOT to use this skill
 

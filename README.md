@@ -4,9 +4,11 @@ A Claude Code skill that lets Project Everglades experts construct, calibrate, a
 
 **What it gives you:**
 
-- **Workflow A** — start with N distinct ideas, scaffold N drafts in parallel, batch preview, batch push to RLS, batch dispatch Taiga
+- **Workflow A** — start with N distinct ideas *in your configured domain*, scaffold N drafts in parallel, batch preview, batch push to RLS, batch dispatch Taiga
 - **Workflow B** — start with one idea, expand to 2–3 orthogonal siblings with a degeneracy check
 - **Workflow C** — N tasks back from review; aggregate feedback, detect cross-task patterns, batch resubmit
+
+> **Same-domain default.** Experts generally work in their assigned domain (EG-1 expert ships EG-1 tasks). The skill is single-domain per session: drafts share an anchor-example pool, tool families, and degeneracy-check semantics within a domain. To work in a different domain, re-run `scripts/setup.py` with the new domain code — don't mix in a single session.
 - **Preview eval** — Opus 4.7 × 8 attempts via Anthropic API + tool-use, runs against your local `oracle.py`. ~90s vs ~40 min for a real Taiga 16-model run
 - **Opinionated state machine** — every draft has a `STATE.md`; skill won't let you skip a Playbook step
 - **Lint** — leak-checker for `problem.md` (method names, canonical targets, strategy hints) and `oracle.py` (judgment-style modes, missing budget)
@@ -30,15 +32,17 @@ That's it. The skill auto-loads on Everglades-related prompts.
 
 ## Quickstart — Workflow A
 
+(Example assumes you're configured as an EG-1 expert.)
+
 ```
 > /everglades-ideate 3
 
-Skill: Paste your 3 briefs (one per line).
+Skill: Paste your 3 briefs (one per line). All in your configured domain (EG-1).
 
 You:
-  1) EG-1, ATAC-seq, ALS iPSC subtype-specific signal vs covariates
-  2) EG-7, PK 2-compartment inverse, recover V1, V2, k10, k12, k21
-  3) EG-1, RNA velocity inverse, colorectal cancer reversion candidate
+  1) ATAC-seq, ALS iPSC subtype-specific signal vs covariates
+  2) Single-cell biomarker, AD PBMC PANEL_B vs PANEL_A trap
+  3) RNA velocity inverse, colorectal cancer reversion candidate
 
 Skill: scaffolds 3 drafts at ~/everglades-drafts/{2026-05-28-atac, ...},
        walks Playbook Steps 1-4 across all 3 round-robin.

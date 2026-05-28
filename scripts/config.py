@@ -65,3 +65,31 @@ def workspace_root():
 
 def tasks_root():
     return Path.home() / "everglades-tasks"
+
+
+def assert_same_domain(brief_domain_code: str | None) -> None:
+    """Enforce same-domain default. If a brief specifies a domain that doesn't
+    match the configured one, refuse and direct the expert to re-run setup.
+
+    The skill is single-domain per session — drafts in a session must share
+    a world_id so scaffolding, anchor examples, degeneracy checks, and
+    cross-task feedback patterns all work cleanly.
+    """
+    if not brief_domain_code:
+        return  # Brief didn't specify — default to configured
+    cfg = load()
+    configured = cfg.get("domain_code")
+    if configured and brief_domain_code != configured:
+        print(
+            f"\n⚠ Domain mismatch:\n"
+            f"   configured domain: {configured}\n"
+            f"   brief domain:      {brief_domain_code}\n\n"
+            f"The skill is single-domain per session. Either:\n"
+            f"  (a) Update the brief to use {configured} (your configured domain), or\n"
+            f"  (b) Re-run `python3 scripts/setup.py` with domain_code={brief_domain_code}\n"
+            f"      to switch your active domain.\n\n"
+            f"Don't mix domains in a single session — scaffolding, anchor examples,\n"
+            f"and degeneracy checks only work within a domain.",
+            file=sys.stderr,
+        )
+        sys.exit(3)

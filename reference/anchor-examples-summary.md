@@ -17,7 +17,23 @@ Full walkthroughs in the Everglades Hub Anchor Example Library.
 
 ## Selecting an analog
 
-| If the task shape is... | Use anchor... |
+**Within-domain first.** When scaffolding, pick an anchor from the expert's configured domain whenever possible — same tool family, same oracle patterns, same review conventions. Cross-domain anchors are a last-resort analogy.
+
+| Domain | Primary anchor(s) | Tool family |
+|---|---|---|
+| EG-1 Bioinformatics | #1 BAM variant calls | BioPython, PySAM, scanpy, anndata |
+| EG-2 Computational Chemistry | #2 IR spectrum | PySCF, ORCA, RDKit |
+| EG-3 Particle/Nuclear | #3 Lattice QCD | scikit-hep |
+| EG-4 Electrical Engineering | #4 AAH metamaterial, #5 RF filter | ngspice, scikit-rf, openEMS |
+| EG-5 Astrophysics | #6 Orbit determination | astropy, Poliastro |
+| EG-6 Seismology | #7 Earthquake hypocenter | ObsPy, SpecFEM3D |
+| EG-7 Systems Biology | #8 PK 2-compartment | scipy.integrate, PyMC |
+| EG-8 Mechanical Engineering | #9 Plate strain gauges | scikit-fem, OpenFOAM |
+| EG-9 Applied Math | analog to #8 (parameter inference) | PyMC, JAGS |
+
+If the expert's domain doesn't have a direct anchor or their task shape doesn't match the domain's primary anchor, **then** consider these cross-domain shape-matches as a secondary fallback:
+
+| If the task shape is... | Cross-domain analog |
 |---|---|
 | Candidate set, model picks one | #1 (variant calls) or #2 (IR spectrum) |
 | Continuous parameters | #3, #4, #6 |
