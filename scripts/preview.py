@@ -128,7 +128,16 @@ async def run_attempt(
     expected: dict,
     model: str,
     max_steps: int = 30,
+    max_tokens_per_turn: int = 16384,
 ) -> dict:
+    """One Opus 4.7 attempt against the local oracle.
+
+    max_tokens_per_turn: bumped from 4096 -> 16384 after empirical validation
+    (2026-05-28) showed that hard Everglades inverse tasks (e.g. Task_893naaf9)
+    can produce 30k+ tokens of reasoning before submit_answer. The 4096 cap
+    caused 8/8 attempts to truncate mid-reasoning and never submit, falsely
+    appearing as "0/8 IN_RANGE" when the model was actually still working.
+    """
     messages = [{"role": "user", "content": problem}]
     transcript = []
     queries_used = 0
@@ -138,7 +147,7 @@ async def run_attempt(
         try:
             resp = await client.messages.create(
                 model=model,
-                max_tokens=4096,
+                max_tokens=max_tokens_per_turn,
                 tools=TOOLS,
                 messages=messages,
             )

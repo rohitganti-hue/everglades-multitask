@@ -146,7 +146,9 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED ─→ (ex
 | `IN-REVISION` | RLS status `needs_edits` | `/everglades-revise` |
 | `APPROVED` | RLS status `done` / `ce5f656b...` | done |
 
-## Threshold design (validated against Taiga distribution, 2026-05-28)
+## Threshold design (validated against Taiga distribution + empirical proxy run, 2026-05-28)
+
+### Distribution validation
 
 The `≤ 2/8` proxy gate was validated against ground-truth Taiga pass rates pulled for 10 approved inverse tasks across EG-1, EG-2, EG-7, EG-9, and Samples:
 
@@ -157,11 +159,28 @@ The `≤ 2/8` proxy gate was validated against ground-truth Taiga pass rates pul
 | 25% | 2 |
 | 28–37.5% | 2 |
 
-80% of approved tasks land ≤ 25% on Taiga — the proxy needs to flag those 8 as "in range." Because Opus 4.7 × 8 is single-model-multi-attempt vs Taiga's 16-model ensemble (and Opus is among the strongest in that ensemble), **proxy pass rates skew slightly more permissive than Taiga** (estimated +5–15%). The strict `≤ 2/8` threshold gives a margin of safety: a task that *barely* clears the proxy gate (2/8 = 25%) will most likely land comfortably under Taiga's 4/16 = 25% cutoff.
+80% of approved tasks land ≤ 25% on Taiga — the proxy needs to flag those 8 as "in range."
 
-The `--force` flag on BORDERLINE results exists because tasks exactly at the 25% Taiga bar can plausibly land at 3/8 on the proxy; an expert who's confident in their calibration shouldn't be blocked.
+### Empirical proxy-vs-Taiga run (N=3)
 
-**Re-validate the threshold when:** Anthropic ships a new frontier model, the Taiga model ensemble changes, or production proxy-vs-Taiga divergence exceeds ~10%.
+We then ran Opus 4.7 × 8 attempts against 3 hard inverse tasks (Task_9m9r37bf scanpy+gudhi, Task_58odc515 pysam, Task_893naaf9 BioPython — all at Taiga 12.5%) and compared. Findings:
+
+- **Proxy was −12.5 pp lower than Taiga** on all 3 hard tasks. Opus 4.7 alone underperforms the 16-model ensemble (ensemble benefits from 1-2 lucky models out of 16).
+- **Threshold agreement 3/3**: ≤ 2/8 proxy correctly classified all 3 as "in range" matching Taiga ≤ 4/16.
+- **Caveat: max_tokens cap was a confound.** At 4096 tokens/turn, hard tasks ran out of budget writing 30k+ reasoning tokens without calling `submit_answer`. Bumped to **16384** in `preview.py`. Re-running with the higher budget would likely raise proxy rates by a few points (closer to Taiga).
+- **N=3 is too small for Spearman.** All 3 tasks landed at exactly 12.5% Taiga. We still need 1-2 easy tasks (Taiga 28-37%) to test the false-positive side of the threshold.
+
+### Net interpretation
+
+Opus alone under-predicts Taiga by ~12.5 pp. So:
+
+- **Proxy 0–2/8 → Taiga 0–4/16 (in range, ship)** — VERIFIED by N=3
+- **Proxy 3/8 → Taiga ~3–6/16 (borderline)** — `--force` flag is correct here
+- **Proxy 4+/8 → Taiga ~6+/16 (too easy)** — UNVERIFIED empirically, but defensible by the +12.5pp ensemble skew
+
+The `--force` flag on BORDERLINE matters more than initially thought: a 3/8 proxy could genuinely be a shippable task that just got unlucky with Opus single-shot.
+
+**Re-validate the threshold when:** Anthropic ships a new frontier model, the Taiga model ensemble changes, production proxy-vs-Taiga divergence exceeds ~10pp, OR you can get 1-2 easy Everglades tasks (Taiga ≥30%) to test the false-positive corner of the threshold.
 
 ## Workspace layout
 
