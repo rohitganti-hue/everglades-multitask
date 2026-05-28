@@ -167,20 +167,25 @@ def upload_file(local_path: Path) -> str | None:
 
 
 def dispatch_runner(task_id: str, *, runner_name: str = "STEM Software Runner"):
-    """Dispatch the 16-model Taiga eval. Returns the run id or None.
+    """DEPRECATED — the skill no longer programmatically dispatches Taiga.
 
-    Probes the actual endpoint by trying the known patterns.
+    After /everglades-push, the expert opens the RLS task URL and clicks
+    the magic-star → STEM Software Runner in the RLS UI. This is intentional:
+      - RLS UI shows live Taiga progress nicely
+      - The dispatch is a single click (≈30s for a batch of 3)
+      - Avoids reverse-engineering the magic-star endpoint
+
+    This function is kept as a stub for future use if Mercor exposes a clean
+    public RLS API for triggering the 16-model runner. For now, prints a
+    pointer to the RLS UI URL.
     """
-    # Pattern A: /tasks/{id}/run-trajectory
-    r = _request("POST", f"/tasks/{task_id}/run-trajectory", data={"runner": runner_name})
-    if r and (r.get("run_id") or r.get("job_id")):
-        return r
-    # Pattern B: /trajectory-batches with task_id
-    r = _request("POST", "/trajectory-batches", data={"task_id": task_id, "runner_name": runner_name})
-    if r and (r.get("batch_id") or r.get("id")):
-        return r
-    print("dispatch_runner: neither known endpoint succeeded — probe RLS swagger.", file=sys.stderr)
-    return None
+    print(
+        f"\n→ Open https://studio.mercor.com/task/{task_id}\n"
+        f"  Click magic-star → {runner_name}\n"
+        f"  Then run /everglades-status to poll, or /everglades-results {task_id}\n",
+        file=sys.stderr,
+    )
+    return {"action": "manual_dispatch", "task_id": task_id, "ui_url": f"https://studio.mercor.com/task/{task_id}"}
 
 
 def push_draft(draft_dir: Path, *, task_id: str) -> dict:
@@ -334,6 +339,7 @@ def main():
         if s3:
             print(json.dumps(patch_task(args.task_id, custom_fields={args.field: [{"file_s3_url": s3}]}), default=str, indent=2))
     elif args.cmd == "dispatch-runner":
+        # Prints the magic-star instructions; doesn't actually call any API.
         print(json.dumps(dispatch_runner(args.task_id), default=str, indent=2))
     elif args.cmd == "transition":
         print(json.dumps(transition(args.task_id, args.edge), default=str, indent=2))

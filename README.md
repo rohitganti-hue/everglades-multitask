@@ -58,13 +58,16 @@ After ~25 min, all 3 drafts SCAFFOLDED.
 Iterate the weak ones. Re-preview. Then:
 
 > /everglades-push-all
-> /everglades-eval-all
-# (Taiga 16-model runs dispatched in parallel; ~50 min wall-clock)
+# Skill prints 3 RLS URLs. Open each, click magic-star → STEM Software Runner.
+# ~3 clicks, ~30 seconds. Taiga runs in parallel; ~30-50 min wall-clock.
+
+> /everglades-status
+# Pulls latest Taiga results for each task. Once all done:
 
 > /everglades-submit task-a task-b
 ```
 
-3 tasks shipped in one session.
+3 tasks shipped in one session. **The skill stops at push and resumes at results** — Taiga dispatch happens manually in the RLS UI (1 click per task), which is faster than reverse-engineering the magic-star endpoint and gives you RLS's live progress UI for free.
 
 ## Repository layout
 

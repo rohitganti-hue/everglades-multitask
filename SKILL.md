@@ -93,12 +93,12 @@ All commands operate on `<draft-id>` (pre-push) or `<task-id>` (post-push). The 
 
 | Command | What it does |
 |---|---|
-| `/everglades-push <draft>` | Create RLS task in expert's domain world, upload files, PATCH custom fields |
-| `/everglades-push-all` | Push every "ready" draft |
-| `/everglades-eval <task>` | Dispatch real Taiga 16-model runner via RLS API |
-| `/everglades-eval-all` | Dispatch every "pushed" task |
-| `/everglades-results <task>` | Fetch Taiga results + analyze transcripts (which models passed, why) |
-| `/everglades-submit <task>` | Transition task to Awaiting Review (only if ≤4/16 Taiga passes) |
+| `/everglades-push <draft>` | Create RLS task in expert's domain world, upload files, PATCH custom_fields. Prints the RLS URL + reminder to click magic-star → STEM Software Runner. |
+| `/everglades-push-all` | Push every "ready" draft, print one RLS URL per task. |
+| `/everglades-results <task>` | Fetch Taiga results (after expert clicks magic-star in RLS) + analyze transcripts. |
+| `/everglades-submit <task>` | Transition task to Awaiting Review (only if ≤4/16 Taiga passes). |
+
+> **Note on Taiga dispatch.** The skill stops at push and resumes at results. After `/everglades-push`, the expert opens the printed RLS URL and clicks **magic-star → STEM Software Runner** in the RLS UI to dispatch the 16-model eval. The skill polls `taiga_submission_history` via `/everglades-status` and `/everglades-results` once the eval has been kicked off. This is intentional: the RLS UI shows live Taiga progress nicely, and the dispatch is a single click per task.
 
 ### Revision phase (Workflow C)
 
@@ -114,32 +114,31 @@ All commands operate on `<draft-id>` (pre-push) or `<task-id>` (post-push). The 
 Every draft / task has one of these states. The skill's logic depends on it. Read the draft's `STATE.md` before suggesting any next command.
 
 ```
-BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED → TAIGA-RUNNING
-             ↑                                         ↓             ↓
-             └── (preview/verify failed) ─────────────                ↓
-                                                            TAIGA-DONE
-                                                       /pass\    /too-easy\
-                                                      ↓         ↓
-                                                IN-REVIEW   iterate (cap 3 rounds → TL)
-                                                      ↓
-                                                  REVIEWED
-                                                 /        \
-                                          APPROVED      IN-REVISION
-                                                         ↓
-                                              Workflow C handles this
-                                                         ↓
-                                                    resubmit → IN-REVIEW
+BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED ─→ (expert clicks magic-star in RLS UI)
+             ↑                                         ↓                                ↓
+             └── (preview/verify failed) ─────────────                          TAIGA-RUNNING
+                                                                                       ↓
+                                                                                TAIGA-DONE
+                                                                          /pass\    /too-easy\
+                                                                         ↓         ↓
+                                                                   IN-REVIEW   iterate (cap 3 → TL)
+                                                                         ↓
+                                                                     REVIEWED
+                                                                    /        \
+                                                             APPROVED      IN-REVISION
+                                                                            ↓
+                                                                       Workflow C
 ```
 
 | State | Marker | Next action |
 |---|---|---|
 | `BRIEFED` | `BRIEF.md` exists | `/everglades-lock` |
-| `LOCKED` | `expected.json` populated + `STATE.md.why` | `/everglades-jobs` |
-| `SCAFFOLDED` | `oracle.py`, `main.py`, `shortcut.py` exist | `/everglades-verify` |
+| `LOCKED` | `golden/expected.json` populated + `STATE.md.why` | `/everglades-jobs` |
+| `SCAFFOLDED` | `oracle/setup.py`, `solution/main.py`, `solution/shortcut.py` exist | `/everglades-verify` |
 | `CALIBRATED` | `verify` PASSES + `shortcut` FAILS | `/everglades-preview` |
 | `READY` | preview ≤2/8 pass + `lint` clean | `/everglades-push` |
-| `PUSHED` | RLS task_id in `meta.yml` | `/everglades-eval` |
-| `TAIGA-RUNNING` | `runs/taiga_<id>.json` pending | poll (skill background) |
+| `PUSHED` | RLS task_id in `config.yaml` | Open RLS link, click magic-star → STEM Software Runner. Then `/everglades-status`. |
+| `TAIGA-RUNNING` | `taiga_submission_history` has entry without results | `/everglades-status` (poll on demand) |
 | `TAIGA-DONE` (pass) | ≤4/16 in results | `/everglades-submit` |
 | `TAIGA-DONE` (too-easy) | 5+/16 | transcript_analyzer → loop |
 | `IN-REVIEW` | RLS status `submitted` | wait |
@@ -234,7 +233,7 @@ When the expert invokes you, follow this loop:
 6. **Scaffold from anchors.** When generating code, find the closest example in `reference/anchor-examples-summary.md` *from the configured domain* and adapt to the expert's specifics. Don't pull from a different domain's anchor — tool families and oracle patterns don't transfer cleanly across domains.
 7. **Refuse prompt-writing.** When asked to write `problem.md`, reasoning trap, or grading guidance, refuse and direct to the playbook. You can format, you cannot write science.
 8. **Auto-PATCH on save.** When the expert edits a file in a `PUSHED` task, immediately push the change to RLS via `PATCH /tasks/{id}`.
-9. **Run preview defensively.** Before any `/everglades-eval` (real Taiga), check that preview ran in the last 24 hrs and showed ≤2/8 pass. If not, recommend a fresh preview.
+9. **Run preview defensively.** Before any `/everglades-push` (which leads to real Taiga dispatch in RLS), check that preview ran in the last 24 hrs and showed ≤2/8 pass. If not, recommend a fresh preview before push.
 
 ## Reference files
 
@@ -275,12 +274,13 @@ With this skill on that same batch (configured as EG-1):
            → Single-cell-AD: 6/8 ✗ TOO EASY (oracle leaks via module_score)
            → RNA velocity: 0/8 ✗ check main.py
 9:55 AM    Iterate the two weak ones (Claude points at the specific leak)
-10:30 AM   /everglades-push-all → 3 RLS tasks created in EG-1 world
-10:32 AM   /everglades-eval-all → 3 Taiga runs dispatched concurrently
-12:00 PM   All 3 Taiga done. /everglades-submit each.
+10:30 AM   /everglades-push-all → 3 RLS tasks created. Skill prints 3 RLS URLs.
+10:32 AM   Expert opens each URL, clicks magic-star → STEM Software Runner.
+           (~3 clicks, ~30 seconds. Taiga runs in parallel from here.)
+12:00 PM   /everglades-status → all 3 Taiga done. /everglades-submit each.
 ```
 
-3 tasks shipped in one focused session vs 4 days sequentially. The shared scaffolding only works because all 3 are EG-1 — that's the same-domain default in action.
+3 tasks shipped in one focused session vs 4 days sequentially. The shared scaffolding only works because all 3 are EG-1 — that's the same-domain default in action. Taiga dispatch is intentionally manual (1 magic-star click per task in RLS); the skill stops at push and resumes at results.
 
 ## When NOT to use this skill
 

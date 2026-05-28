@@ -89,16 +89,27 @@ Skill: all 3 are scanpy/AnnData. Scaffolds shared module
           Re-preview: 2/8 ✓ IN RANGE
 
 10:00 AM  All 3 in range. > /everglades-push-all
-          3 RLS tasks created in EG-1 + EG-7 worlds, files uploaded,
-          custom_fields PATCHed. Returns task IDs.
+          3 RLS tasks created in EG-1 world, files uploaded,
+          custom_fields PATCHed. Skill prints 3 RLS URLs:
+            https://studio.mercor.com/task/<id1>
+            https://studio.mercor.com/task/<id2>
+            https://studio.mercor.com/task/<id3>
 
-10:02 AM  > /everglades-eval-all
-          Dispatches 3 Taiga 16-model runs concurrently.
-          ETA ~30-50 min each. Skill polls in background.
+10:02 AM  Expert opens each URL in browser, clicks magic-star →
+          STEM Software Runner. Taiga starts 3 × 16-model runs in parallel.
+          ~30 seconds of clicking, then back to Claude Code.
 
-10:35 AM  task-1 lands: 3/16 ✓ → /everglades-submit
-10:42 AM  task-2 lands: 4/16 ✓ → /everglades-submit
-10:48 AM  task-3 lands: 5/16 ✗ — preview-vs-Taiga drift; one more harden
+10:35 AM  > /everglades-status
+          task-1: 3/16 ✓ → /everglades-submit
+          task-2: still running (~10 min ETA)
+          task-3: still running (~15 min ETA)
+
+10:42 AM  > /everglades-status
+          task-2: 4/16 ✓ → /everglades-submit
+          task-3: still running
+
+10:48 AM  > /everglades-status
+          task-3: 5/16 ✗ — preview-vs-Taiga drift; one more harden
 ```
 
 3 tasks shipped (with 1 needing one more round) in **~1h 45m of active time** — vs **4 days** sequentially.
