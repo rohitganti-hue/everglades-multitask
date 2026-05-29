@@ -40,11 +40,27 @@ def main():
         except Exception:
             existing = {}
 
+    print(
+        "\nRLS API key — your PERSONAL key, not the shared SPL/admin one.\n"
+        "Generate at https://studio.mercor.com/ → Profile → Settings → API Keys\n"
+        "→ 'Generate new key' (name it 'everglades-multitask-skill' or similar).\n"
+        "The skill will act as you when it claims, edits, and submits tasks."
+    )
     rls_key = prompt(
         "RLS API key (starts with rls-sk-...)",
         default=existing.get("rls_api_key"),
         secret=True,
     )
+    SHARED_SPL_KEY_PREFIX = "rls-sk-qbYvUlRanc"
+    if rls_key.startswith(SHARED_SPL_KEY_PREFIX):
+        print(
+            "\n⚠ WARNING: that looks like the shared SPL/admin key from\n"
+            "  EVERGLADES_KNOWLEDGE.md. You should use your OWN personal RLS key\n"
+            "  instead — task ownership and audit trails will be attributed to\n"
+            "  whoever owns this key. Generate yours at studio.mercor.com →\n"
+            "  Settings → API Keys, then re-run setup.py.\n"
+            "  (Continuing anyway with what you entered.)"
+        )
     print(
         "\nAnthropic API key (OPTIONAL — only needed for /everglades-preview).\n"
         "If you skip preview, you can push drafts straight to RLS and let the\n"

@@ -253,7 +253,7 @@ python3 ~/.claude/skills/everglades-multitask/scripts/setup.py
 ```
 
 Prompts for:
-- **RLS API key** (required — every workflow step touches RLS)
+- **RLS API key** (required — every workflow step touches RLS). Use your **PERSONAL** key, not the shared SPL/admin one. Generate at studio.mercor.com → Settings → API Keys → "Generate new key". The skill acts as you when it claims, edits, and submits tasks.
 - **Anthropic API key** (OPTIONAL — only needed for `/everglades-preview`. Skip if you'd rather push straight to RLS and let real Taiga be your only signal.)
 - **Domain world ID** (`world_95d559681bc0411db772f38393216250` for EG-1 Bioinformatics, etc.)
 - **Expert user ID** (from RLS profile, optional)
