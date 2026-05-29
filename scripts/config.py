@@ -1,4 +1,9 @@
-"""Config loader. ~/.everglades/config.json holds RLS + Anthropic creds + world id."""
+"""Config loader. ~/.everglades/config.json holds the Anthropic key (optional)
++ the expert's domain code (used to pick anchor examples for scaffolding).
+
+The skill is LOCAL-ONLY: no RLS API key, no Taiga API key. After local
+iteration the expert copy-pastes drafts into the RLS web UI manually.
+"""
 import json
 import os
 import sys
@@ -10,34 +15,23 @@ CONFIG_PATH = Path.home() / ".everglades" / "config.json"
 def load(*, require_anthropic: bool = False):
     """Load ~/.everglades/config.json.
 
-    rls_api_key + world_id are always required (every workflow command
-    needs RLS). anthropic_api_key is ONLY needed for /everglades-preview;
-    pass require_anthropic=True from preview.py to enforce it, otherwise
-    it's optional.
+    Only `anthropic_api_key` and `domain_code` may live here. `anthropic_api_key`
+    is needed solely by /everglades-preview; pass require_anthropic=True from
+    preview.py to enforce it, otherwise it's optional.
     """
     if not CONFIG_PATH.exists():
-        print(
-            f"Config not found at {CONFIG_PATH}.\n"
-            "Run: python3 ~/.claude/skills/everglades-multitask/scripts/setup.py",
-            file=sys.stderr,
-        )
-        sys.exit(2)
+        # No config file is OK — the skill works with sensible defaults if the
+        # expert never wants /everglades-preview.
+        return {"domain_code": "EG-1", "anthropic_api_key": None}
     with CONFIG_PATH.open() as f:
         cfg = json.load(f)
-    required = ["rls_api_key", "world_id"]
-    if require_anthropic:
-        required.append("anthropic_api_key")
-    missing = [k for k in required if not cfg.get(k)]
-    if missing:
-        if "anthropic_api_key" in missing:
-            print(
-                "Anthropic API key not configured. The proxy/preview eval "
-                "(/everglades-preview) needs it. Run setup.py to add one, or "
-                "skip preview and push straight to Taiga.",
-                file=sys.stderr,
-            )
-        else:
-            print(f"Config missing required keys: {missing}. Re-run setup.py.", file=sys.stderr)
+    if require_anthropic and not cfg.get("anthropic_api_key"):
+        print(
+            "Anthropic API key not configured. The proxy/preview eval "
+            "(/everglades-preview) needs it. Run setup.py to add one, or "
+            "skip preview and copy-paste straight to the RLS UI.",
+            file=sys.stderr,
+        )
         sys.exit(2)
     return cfg
 
@@ -49,18 +43,8 @@ def save(cfg: dict):
     os.chmod(CONFIG_PATH, 0o600)
 
 
-# Hard-coded — these never change for the STEM Software campaign.
-CAMPAIGN_ID = "camp_591445dee0d942d6827f724012d2f684"
-COMPANY_ID = "comp_2fa4115109d741cd94a3c409ed89e61f"
-RLS_BASE = "https://api.studio.mercor.com"
-
-# Approved/done status IDs across worlds
-APPROVED_STATUSES = {
-    "ce5f656b-6b79-4913-b0ba-37df93dc9eb1",
-    "done",
-}
-
-# Per-domain world IDs
+# Domain code -> canonical RLS world_id mapping. Used purely as a label so the
+# scaffolding picks the right anchor example. NO RLS API CALLS are made.
 DOMAIN_WORLDS = {
     "Samples": "world_73b237efc96b4b4fbf736105946cbcb2",
     "EG-1": "world_95d559681bc0411db772f38393216250",
@@ -76,37 +60,5 @@ DOMAIN_WORLDS = {
 
 
 def workspace_root():
-    """The expert's draft + task workspace."""
+    """The expert's draft workspace."""
     return Path.home() / "everglades-drafts"
-
-
-def tasks_root():
-    return Path.home() / "everglades-tasks"
-
-
-def assert_same_domain(brief_domain_code: str | None) -> None:
-    """Enforce same-domain default. If a brief specifies a domain that doesn't
-    match the configured one, refuse and direct the expert to re-run setup.
-
-    The skill is single-domain per session — drafts in a session must share
-    a world_id so scaffolding, anchor examples, degeneracy checks, and
-    cross-task feedback patterns all work cleanly.
-    """
-    if not brief_domain_code:
-        return  # Brief didn't specify — default to configured
-    cfg = load()
-    configured = cfg.get("domain_code")
-    if configured and brief_domain_code != configured:
-        print(
-            f"\n⚠ Domain mismatch:\n"
-            f"   configured domain: {configured}\n"
-            f"   brief domain:      {brief_domain_code}\n\n"
-            f"The skill is single-domain per session. Either:\n"
-            f"  (a) Update the brief to use {configured} (your configured domain), or\n"
-            f"  (b) Re-run `python3 scripts/setup.py` with domain_code={brief_domain_code}\n"
-            f"      to switch your active domain.\n\n"
-            f"Don't mix domains in a single session — scaffolding, anchor examples,\n"
-            f"and degeneracy checks only work within a domain.",
-            file=sys.stderr,
-        )
-        sys.exit(3)

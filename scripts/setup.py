@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """First-run setup wizard for the everglades-multitask skill.
 
-Writes ~/.everglades/config.json with the expert's RLS key, Anthropic key,
-and assigned domain world.
+The skill is LOCAL-ONLY: builds + calibrates drafts on disk, then the expert
+copy-pastes into the RLS web UI. We only ask for:
+  - Anthropic API key (OPTIONAL — for /everglades-preview)
+  - Domain code (lets the scaffolder pick the right anchor example)
 """
 from __future__ import annotations
 
@@ -10,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from config import CONFIG_PATH, DOMAIN_WORLDS, save, workspace_root, tasks_root
+from config import CONFIG_PATH, DOMAIN_WORLDS, save, workspace_root
 
 
 def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
@@ -31,6 +33,13 @@ def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
 
 def main():
     print("=== Everglades Multitask Skill — First-Run Setup ===\n")
+    print(
+        "This skill is LOCAL-ONLY. It scaffolds + calibrates Everglades inverse\n"
+        "and forward task drafts on your machine. When a draft is ready, you\n"
+        "copy-paste it into the RLS web UI (https://studio.mercor.com/) and\n"
+        "click 'magic-star → STEM Software Runner' there to launch Taiga.\n"
+        "No RLS API key needed.\n"
+    )
     existing = {}
     if CONFIG_PATH.exists():
         try:
@@ -40,61 +49,29 @@ def main():
         except Exception:
             existing = {}
 
-    print(
-        "\nRLS API key — your PERSONAL key, not the shared SPL/admin one.\n"
-        "Generate at https://studio.mercor.com/ → Profile → Settings → API Keys\n"
-        "→ 'Generate new key' (name it 'everglades-multitask-skill' or similar).\n"
-        "The skill will act as you when it claims, edits, and submits tasks."
-    )
-    rls_key = prompt(
-        "RLS API key (starts with rls-sk-...)",
-        default=existing.get("rls_api_key"),
-        secret=True,
-    )
-    SHARED_SPL_KEY_PREFIX = "rls-sk-qbYvUlRanc"
-    if rls_key.startswith(SHARED_SPL_KEY_PREFIX):
-        print(
-            "\n⚠ WARNING: that looks like the shared SPL/admin key from\n"
-            "  EVERGLADES_KNOWLEDGE.md. You should use your OWN personal RLS key\n"
-            "  instead — task ownership and audit trails will be attributed to\n"
-            "  whoever owns this key. Generate yours at studio.mercor.com →\n"
-            "  Settings → API Keys, then re-run setup.py.\n"
-            "  (Continuing anyway with what you entered.)"
-        )
-    print(
-        "\nAnthropic API key (OPTIONAL — only needed for /everglades-preview).\n"
-        "If you skip preview, you can push drafts straight to RLS and let the\n"
-        "real Taiga 16-model eval be your only signal. Press Enter to skip."
-    )
+    print("Anthropic API key — OPTIONAL. Only used by /everglades-preview (the")
+    print("proxy eval: Opus 4.7 × 8 attempts via tool-use against your local")
+    print("oracle.py). Press Enter to skip; everything else still works.")
     anthropic_key = prompt(
         "Anthropic API key (starts with sk-ant-..., or blank to skip)",
         default=existing.get("anthropic_api_key", ""),
         secret=True,
     )
 
-    print("\nWhich domain world are you primarily working in?")
-    for code, wid in DOMAIN_WORLDS.items():
-        print(f"  {code:8s}  {wid}")
+    print("\nWhich domain are you working in?")
+    for code in DOMAIN_WORLDS:
+        print(f"  {code}")
     domain_code = prompt(
         "Domain code (e.g. EG-1, EG-7)",
         default=existing.get("domain_code", "EG-1"),
     )
     if domain_code not in DOMAIN_WORLDS:
-        print(f"Unknown domain {domain_code}; falling back to EG-1.")
+        print(f"Unknown domain {domain_code!r}; falling back to EG-1.")
         domain_code = "EG-1"
-    world_id = DOMAIN_WORLDS[domain_code]
-
-    expert_id = prompt(
-        "Your RLS expert/user ID (optional, helps filter your tasks)",
-        default=existing.get("expert_id", ""),
-    )
 
     cfg = {
-        "rls_api_key": rls_key,
         "anthropic_api_key": anthropic_key or None,
         "domain_code": domain_code,
-        "world_id": world_id,
-        "expert_id": expert_id or None,
         "preview_model": existing.get("preview_model", "claude-opus-4-7"),
         "preview_attempts": existing.get("preview_attempts", 8),
     }
@@ -103,9 +80,7 @@ def main():
     if not anthropic_key:
         print("  (Anthropic key skipped — /everglades-preview will be disabled.)")
     workspace_root().mkdir(parents=True, exist_ok=True)
-    tasks_root().mkdir(parents=True, exist_ok=True)
     print(f"✓ Draft workspace: {workspace_root()}")
-    print(f"✓ Pushed-task workspace: {tasks_root()}")
     print("\nReady. In Claude Code, run /everglades-status to begin.\n")
 
 
