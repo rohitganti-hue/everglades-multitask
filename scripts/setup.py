@@ -45,9 +45,14 @@ def main():
         default=existing.get("rls_api_key"),
         secret=True,
     )
+    print(
+        "\nAnthropic API key (OPTIONAL — only needed for /everglades-preview).\n"
+        "If you skip preview, you can push drafts straight to RLS and let the\n"
+        "real Taiga 16-model eval be your only signal. Press Enter to skip."
+    )
     anthropic_key = prompt(
-        "Anthropic API key (starts with sk-ant-...)",
-        default=existing.get("anthropic_api_key"),
+        "Anthropic API key (starts with sk-ant-..., or blank to skip)",
+        default=existing.get("anthropic_api_key", ""),
         secret=True,
     )
 
@@ -70,7 +75,7 @@ def main():
 
     cfg = {
         "rls_api_key": rls_key,
-        "anthropic_api_key": anthropic_key,
+        "anthropic_api_key": anthropic_key or None,
         "domain_code": domain_code,
         "world_id": world_id,
         "expert_id": expert_id or None,
@@ -79,6 +84,8 @@ def main():
     }
     save(cfg)
     print(f"\n✓ Config written to {CONFIG_PATH} (mode 600)")
+    if not anthropic_key:
+        print("  (Anthropic key skipped — /everglades-preview will be disabled.)")
     workspace_root().mkdir(parents=True, exist_ok=True)
     tasks_root().mkdir(parents=True, exist_ok=True)
     print(f"✓ Draft workspace: {workspace_root()}")

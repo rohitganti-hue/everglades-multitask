@@ -221,7 +221,7 @@ async def run_attempt(
 
 
 async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
-    cfg = load_config()
+    cfg = load_config(require_anthropic=True)
     client = anthropic.AsyncAnthropic(api_key=cfg["anthropic_api_key"])
     oracle_mod = load_oracle_module(draft_dir)
     expected = load_expected(draft_dir)

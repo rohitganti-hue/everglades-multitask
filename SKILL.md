@@ -253,10 +253,19 @@ python3 ~/.claude/skills/everglades-multitask/scripts/setup.py
 ```
 
 Prompts for:
-- RLS API key (from `~/Desktop/Brain/Everglades/EVERGLADES_KNOWLEDGE.md` or RLS profile page)
-- Anthropic API key (for preview evals — Opus 4.7 × 8 attempts per preview)
-- Domain world ID (`world_95d559681bc0411db772f38393216250` for EG-1 Bioinformatics, etc.)
-- Expert user ID (from RLS profile)
+- **RLS API key** (required — every workflow step touches RLS)
+- **Anthropic API key** (OPTIONAL — only needed for `/everglades-preview`. Skip if you'd rather push straight to RLS and let real Taiga be your only signal.)
+- **Domain world ID** (`world_95d559681bc0411db772f38393216250` for EG-1 Bioinformatics, etc.)
+- **Expert user ID** (from RLS profile, optional)
+
+### Anthropic key is preview-only
+
+The Anthropic key is used **exclusively** by `/everglades-preview` (the proxy eval — Opus 4.7 × 8 attempts via tool-use against local `oracle.py`). Every other command — ideate, verify, shortcut, lint, push, status, results, submit, inbox, revise — runs without it. Experts who'd rather skip the cheap pre-flight signal and go straight from local verification → RLS push → real Taiga can configure RLS only and the skill works fine.
+
+The proxy is a recommended-not-required iteration accelerator. Without it you lose:
+- The cheap pre-flight signal (~90s vs ~40 min for real Taiga)
+- Transcript-driven hardening suggestions
+- The "is this task even solvable?" sanity check before burning a Taiga run
 
 ## How to drive the skill
 

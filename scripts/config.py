@@ -7,7 +7,14 @@ from pathlib import Path
 CONFIG_PATH = Path.home() / ".everglades" / "config.json"
 
 
-def load():
+def load(*, require_anthropic: bool = False):
+    """Load ~/.everglades/config.json.
+
+    rls_api_key + world_id are always required (every workflow command
+    needs RLS). anthropic_api_key is ONLY needed for /everglades-preview;
+    pass require_anthropic=True from preview.py to enforce it, otherwise
+    it's optional.
+    """
     if not CONFIG_PATH.exists():
         print(
             f"Config not found at {CONFIG_PATH}.\n"
@@ -17,10 +24,20 @@ def load():
         sys.exit(2)
     with CONFIG_PATH.open() as f:
         cfg = json.load(f)
-    required = ["rls_api_key", "anthropic_api_key", "world_id"]
+    required = ["rls_api_key", "world_id"]
+    if require_anthropic:
+        required.append("anthropic_api_key")
     missing = [k for k in required if not cfg.get(k)]
     if missing:
-        print(f"Config missing keys: {missing}. Re-run setup.py.", file=sys.stderr)
+        if "anthropic_api_key" in missing:
+            print(
+                "Anthropic API key not configured. The proxy/preview eval "
+                "(/everglades-preview) needs it. Run setup.py to add one, or "
+                "skip preview and push straight to Taiga.",
+                file=sys.stderr,
+            )
+        else:
+            print(f"Config missing required keys: {missing}. Re-run setup.py.", file=sys.stderr)
         sys.exit(2)
     return cfg
 
