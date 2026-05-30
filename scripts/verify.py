@@ -22,20 +22,7 @@ from pathlib import Path
 import paths
 
 
-def check_answer(submitted, expected: dict) -> bool:
-    target = expected.get("answer")
-    tol = expected.get("tolerance", 0)
-    try:
-        s = float(submitted)
-        t = float(target)
-        if tol == 0:
-            return s == t
-        return abs(s - t) <= abs(t) * tol if t != 0 else abs(s) <= tol
-    except (TypeError, ValueError):
-        pass
-    if isinstance(submitted, str) and isinstance(target, str):
-        return submitted.strip().lower() == target.strip().lower()
-    return submitted == target
+from grading import check_answer  # noqa: F401 — re-exported for back-compat
 
 
 def verify(draft_dir: Path, *, shortcut: bool = False) -> dict:

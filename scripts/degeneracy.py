@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 import paths
-from verify import check_answer
+from grading import check_answer  # single shared grader — see scripts/grading.py
 
 
 def load_oracle(draft_dir: Path):

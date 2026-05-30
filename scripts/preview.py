@@ -94,20 +94,7 @@ def load_problem(draft_dir: Path):
     return p.read_text()
 
 
-def check_answer(submitted, expected: dict) -> bool:
-    target = expected.get("answer")
-    tol = expected.get("tolerance", 0)
-    try:
-        s = float(submitted)
-        t = float(target)
-        if tol == 0:
-            return s == t
-        return abs(s - t) <= abs(t) * tol if t != 0 else abs(s) <= tol
-    except (TypeError, ValueError):
-        pass
-    if isinstance(submitted, str) and isinstance(target, str):
-        return submitted.strip().lower() == target.strip().lower()
-    return submitted == target
+from grading import check_answer  # single shared grader — see scripts/grading.py
 
 
 TOOLS = [
@@ -308,10 +295,21 @@ def classify(pass_rate: float) -> str:
 
 
 async def main_async():
+    # Pull defaults from config.json (~/.everglades/config.json) so users can
+    # set preview_model / preview_attempts there and have them take effect.
+    # Previously these were hardcoded argparse defaults and changing the config
+    # had no effect — config writes were dead.
+    try:
+        cfg = load_config()
+        default_model = cfg.get("preview_model") or "claude-opus-4-7"
+        default_attempts = cfg.get("preview_attempts") or 8
+    except SystemExit:
+        default_model = "claude-opus-4-7"
+        default_attempts = 8
     p = argparse.ArgumentParser()
     p.add_argument("drafts", nargs="+", help="Draft directories (one or more)")
-    p.add_argument("--attempts", type=int, default=8)
-    p.add_argument("--model", default="claude-opus-4-7")
+    p.add_argument("--attempts", type=int, default=default_attempts)
+    p.add_argument("--model", default=default_model)
     args = p.parse_args()
 
     draft_paths = [Path(d).expanduser().resolve() for d in args.drafts]
