@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from config import DOMAIN_WORLDS, load as load_config, workspace_root
+from config import load as load_config, workspace_root
 import paths as paths_mod
 from yaml_io import load_yaml
 

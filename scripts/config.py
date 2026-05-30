@@ -43,20 +43,10 @@ def save(cfg: dict):
     os.chmod(CONFIG_PATH, 0o600)
 
 
-# Domain code -> canonical RLS world_id mapping. Used purely as a label so the
-# scaffolding picks the right anchor example. NO RLS API CALLS are made.
-DOMAIN_WORLDS = {
-    "Samples": "world_73b237efc96b4b4fbf736105946cbcb2",
-    "EG-1": "world_95d559681bc0411db772f38393216250",
-    "EG-2": "world_3a65693c950c42a9bf77ca7ada00d92e",
-    "EG-3": "world_2f339a331c2b4e42af45b616e948b577",
-    "EG-4": "world_c103da8ca544493c9c9ebeb12fff4235",
-    "EG-5": "world_87f397299fe44817b9750c7aa72e4dd2",
-    "EG-6": "world_a7697c54b3dd42c2bd9dc45c1580f260",
-    "EG-7": "world_f359f5689aaa46ff952b67239580b7c3",
-    "EG-8": "world_2e47c25ea4af477999cfe545fa279837",
-    "EG-9": "world_71cbe60f81ec43d79cacef9fa764ba19",
-}
+# Valid domain codes. Used purely as a label so the scaffolding picks the right
+# anchor example. The skill is local-only — it makes NO RLS API calls, so no
+# world_id (or any other internal RLS identifier) is needed or stored here.
+DOMAIN_CODES = ("Samples", "EG-1", "EG-2", "EG-3", "EG-4", "EG-5", "EG-6", "EG-7", "EG-8", "EG-9")
 
 
 def workspace_root():
