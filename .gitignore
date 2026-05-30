@@ -17,9 +17,6 @@ venv/
 *.secret
 config.local.json
 
-# Test artifacts
-.pytest_cache/
-
 # Note: skill output dirs (~/.everglades/, ~/everglades-drafts/) cannot be
 # listed here — git does not expand ~. Those directories live under $HOME,
 # outside this repo, so they're never staged anyway.
