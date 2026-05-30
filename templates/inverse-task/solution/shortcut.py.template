@@ -38,6 +38,7 @@ def main():
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from oracle.setup import query_oracle  # type: ignore[import-not-found]
     answer = naive_solve(query_oracle)
+    print(f"EVERGLADES_SUBMIT_ANSWER: {answer}")
     print(answer)
 
 

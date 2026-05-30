@@ -19,4 +19,6 @@ def naive_solve():
 
 
 if __name__ == "__main__":
-    print(naive_solve())
+    answer = naive_solve()
+    print(f"EVERGLADES_SUBMIT_ANSWER: {answer}")
+    print(answer)

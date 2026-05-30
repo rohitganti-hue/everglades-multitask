@@ -23,7 +23,9 @@ def main():
     # 2. Post-process (mesh refinement check, time-averaging, etc.)
     answer = ...  # TODO
 
-    # 3. Print final answer as last stdout line
+    # 3. Emit the sentinel line (for /everglades-verify) + a plain final line
+    #    (kept for the stemcomp CLI sandbox + legacy tooling)
+    print(f"EVERGLADES_SUBMIT_ANSWER: {answer}")
     print(answer)
 
 

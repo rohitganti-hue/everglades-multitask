@@ -1,28 +1,65 @@
 """Local main.py vs oracle/setup.py verifier.
 
-Runs the draft's solution/main.py with the draft directory on PYTHONPATH so
-it can `from oracle.setup import query_oracle`. Captures the final-stdout-line
-as the submitted answer, compares to golden/expected.json.
+Uses a SUBPROCESS to run solution/main.py so the verifier is robust against
+infinite loops and missing deps. Extracts the submitted answer using a
+sentinel-line contract that matches /everglades-preview's submit_answer
+behavior:
 
-This matches the master Everglades CLI layout exactly.
+  EVERGLADES_SUBMIT_ANSWER: <value>
+
+This is the contract main.py templates emit. If the sentinel line is missing,
+falls back to the LAST non-empty stdout line (legacy behavior).
+
+Why the contract: the previous version of verify read only the last stdout
+line; preview hooks the Anthropic `submit_answer` tool. A main.py could pass
+one and fail the other if it printed extra trailing lines or had its actual
+answer mid-stream. Standardizing on a sentinel line makes both paths agree.
+
+This matches the canonical Everglades CLI layout exactly.
 
 CLI:
   python3 verify.py <draft_dir>
-  python3 verify.py <draft_dir> --shortcut    # run solution/shortcut.py instead (expects FAIL)
+  python3 verify.py <draft_dir> --shortcut    # run solution/shortcut.py (expects FAIL)
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import paths
 
 
 from grading import check_answer  # noqa: F401 — re-exported for back-compat
+
+
+SUBMIT_SENTINEL = re.compile(r"^EVERGLADES_SUBMIT_ANSWER:\s*(.+)$")
+
+
+def extract_submitted(stdout: str) -> str | None:
+    """Pull the submitted answer from main.py's stdout.
+
+    Preferred contract: a line of the form
+        EVERGLADES_SUBMIT_ANSWER: <value>
+    (the template's `solve()` helper emits this).
+
+    Fallback: last non-empty stdout line (legacy behavior, kept so existing
+    main.py files keep working without changes).
+    """
+    # Prefer sentinel
+    for line in stdout.splitlines():
+        m = SUBMIT_SENTINEL.match(line.strip())
+        if m:
+            return m.group(1).strip()
+    # Fallback: last non-empty line
+    for line in reversed(stdout.splitlines()):
+        if line.strip():
+            return line.strip()
+    return None
 
 
 def verify(draft_dir: Path, *, shortcut: bool = False) -> dict:
@@ -49,11 +86,7 @@ def verify(draft_dir: Path, *, shortcut: bool = False) -> dict:
 
     stdout = r.stdout.strip()
     stderr = r.stderr.strip()
-    submitted = None
-    for line in reversed(stdout.splitlines()):
-        if line.strip():
-            submitted = line.strip()
-            break
+    submitted = extract_submitted(stdout)
     passed = submitted is not None and check_answer(submitted, expected)
     result = {
         "script": str(script.relative_to(draft_dir)),
@@ -63,11 +96,11 @@ def verify(draft_dir: Path, *, shortcut: bool = False) -> dict:
         "tolerance": expected.get("tolerance"),
         "passed": passed,
         "stderr_tail": stderr[-2000:] if stderr else "",
-        "ran_at": datetime.utcnow().isoformat() + "Z",
+        "ran_at": datetime.now(timezone.utc).isoformat(),
     }
     runs = paths.runs_dir(draft_dir)
     runs.mkdir(parents=True, exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     kind = "shortcut" if shortcut else "verify"
     (runs / f"{kind}_{ts}.json").write_text(json.dumps(result, default=str, indent=2))
     return result

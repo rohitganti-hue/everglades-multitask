@@ -47,6 +47,9 @@ def main():
     from oracle.setup import query_oracle  # type: ignore[import-not-found]
 
     answer = solve(query_oracle)
+    # Emit BOTH the sentinel (for /everglades-verify) and a plain final line
+    # (kept for the stemcomp CLI sandbox + legacy tooling).
+    print(f"EVERGLADES_SUBMIT_ANSWER: {answer}")
     print(answer)
 
 

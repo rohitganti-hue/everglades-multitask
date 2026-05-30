@@ -197,14 +197,34 @@ async def run_attempt(
             elif block.name == "query_oracle":
                 queries_used += 1
                 try:
-                    result = oracle_mod.query_oracle(
-                        block.input.get("mode"),
-                        block.input.get("parameters", {}),
+                    # Run oracle under a 60s per-call timeout. An infinite-loop
+                    # or hanging oracle would otherwise freeze the asyncio
+                    # event loop and block the entire preview batch.
+                    loop = asyncio.get_running_loop()
+                    result = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            None,
+                            oracle_mod.query_oracle,
+                            block.input.get("mode"),
+                            block.input.get("parameters", {}),
+                        ),
+                        timeout=60.0,
                     )
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,
                         "content": json.dumps(result, default=str)[:8000],
+                    })
+                except asyncio.TimeoutError:
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": (
+                            "Oracle error: call exceeded 60s timeout. The "
+                            "oracle may have an infinite loop or be too slow "
+                            "for the preview harness."
+                        ),
+                        "is_error": True,
                     })
                 except Exception as e:
                     tool_results.append({
