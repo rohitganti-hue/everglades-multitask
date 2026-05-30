@@ -14,6 +14,7 @@ from pathlib import Path
 
 from config import DOMAIN_WORLDS, load as load_config, workspace_root
 import paths as paths_mod
+from yaml_io import load_yaml
 
 
 def parse_state_md(p: Path) -> dict:
@@ -30,16 +31,13 @@ def parse_state_md(p: Path) -> dict:
 
 
 def parse_config_yaml(p: Path) -> dict:
-    if not p.exists():
-        return {}
-    text = p.read_text()
-    out = {}
-    for line in text.splitlines():
-        line = line.strip()
-        if ":" in line and not line.startswith("#"):
-            k, v = line.split(":", 1)
-            out[k.strip()] = v.strip().strip('"').strip("'")
-    return out
+    """Parse a draft's config.yaml using a real YAML parser.
+
+    The previous hand-rolled parser broke on inline comments
+    (e.g. `direction: inverse  # or forward` pushed
+    `"inverse  # or forward"` into the directionality field).
+    """
+    return load_yaml(p)
 
 
 def latest_run(draft: Path, kind: str):

@@ -43,20 +43,40 @@ except ImportError:
     sys.exit(2)
 
 
-def load_oracle_module(draft_dir: Path):
-    """Dynamic-import the draft's oracle/setup.py."""
+def load_oracle_module(draft_dir: Path, *, attempt_idx: int | None = None):
+    """Dynamic-import the draft's oracle/setup.py with a UNIQUE module name.
+
+    Each preview attempt gets its own fresh module instance — module-level
+    globals (budget counters, seeded RNGs) start independent per attempt.
+    Critical correctness fix: previously all 8 concurrent attempts shared one
+    oracle module, sharing the `_used` counter and `_RNG` seed. That meant
+    8 attempts collectively saw ~30 queries (~3.75 each) instead of 30 each,
+    and once the shared budget tripped every attempt got "budget exceeded".
+
+    Pass `attempt_idx` from run_attempt() to get the per-attempt isolation;
+    omit it for one-off CLI use where global state doesn't matter.
+    """
     oracle_path = paths.oracle_setup(draft_dir)
     if not oracle_path.exists():
         raise FileNotFoundError(f"No oracle/setup.py at {oracle_path}")
+    # Unique module name per attempt so importlib gives a distinct namespace
+    suffix = f"_a{attempt_idx}" if attempt_idx is not None else ""
     spec = importlib.util.spec_from_file_location(
-        f"oracle_setup_{draft_dir.name}", oracle_path
+        f"oracle_setup_{draft_dir.name}{suffix}", oracle_path
     )
     if spec is None or spec.loader is None:
         raise ImportError(f"Could not load {oracle_path}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    # Try query_oracle first, fall back to handle_query (some Everglades
+    # oracles use the latter — empirically observed on Task_58odc515, etc.)
     if not hasattr(mod, "query_oracle"):
-        raise AttributeError(f"{oracle_path} has no query_oracle function")
+        if hasattr(mod, "handle_query"):
+            mod.query_oracle = mod.handle_query
+        else:
+            raise AttributeError(
+                f"{oracle_path} has no query_oracle or handle_query function"
+            )
     return mod
 
 
@@ -124,7 +144,7 @@ async def run_attempt(
     *,
     attempt_idx: int,
     problem: str,
-    oracle_mod,
+    draft_dir: Path,
     expected: dict,
     model: str,
     max_steps: int = 30,
@@ -132,12 +152,17 @@ async def run_attempt(
 ) -> dict:
     """One Opus 4.7 attempt against the local oracle.
 
+    Loads a FRESH oracle module instance per attempt (unique sys.modules slot)
+    so module-level state — budget counters, seeded RNGs — start independent.
+
     max_tokens_per_turn: bumped from 4096 -> 16384 after empirical validation
     (2026-05-28) showed that hard Everglades inverse tasks (e.g. Task_893naaf9)
     can produce 30k+ tokens of reasoning before submit_answer. The 4096 cap
     caused 8/8 attempts to truncate mid-reasoning and never submit, falsely
     appearing as "0/8 IN_RANGE" when the model was actually still working.
     """
+    # Fresh per-attempt oracle (P0 fix — see load_oracle_module docstring).
+    oracle_mod = load_oracle_module(draft_dir, attempt_idx=attempt_idx)
     messages = [{"role": "user", "content": problem}]
     transcript = []
     queries_used = 0
@@ -223,7 +248,8 @@ async def run_attempt(
 async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
     cfg = load_config(require_anthropic=True)
     client = anthropic.AsyncAnthropic(api_key=cfg["anthropic_api_key"])
-    oracle_mod = load_oracle_module(draft_dir)
+    # Probe-import once up-front to surface ImportErrors / missing deps early.
+    load_oracle_module(draft_dir)
     expected = load_expected(draft_dir)
     problem = load_problem(draft_dir)
 
@@ -235,7 +261,7 @@ async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
                 client,
                 attempt_idx=i,
                 problem=problem,
-                oracle_mod=oracle_mod,
+                draft_dir=draft_dir,
                 expected=expected,
                 model=model,
             )

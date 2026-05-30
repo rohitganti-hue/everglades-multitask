@@ -48,8 +48,12 @@ def detect_direction(draft: Path) -> str:
         return "forward"
     cfg = config_yaml(draft)
     if cfg.exists():
-        for line in cfg.read_text().splitlines():
-            line = line.strip()
-            if line.startswith("direction:"):
-                return line.split(":", 1)[1].strip()
+        try:
+            from yaml_io import load_yaml
+            data = load_yaml(cfg)
+            d = data.get("direction") or data.get("directionality")
+            if d:
+                return str(d).strip().lower()
+        except Exception:
+            pass
     return "unknown"
