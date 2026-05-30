@@ -86,15 +86,18 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → EXPORTED → (exp
              └── (preview/verify failed) ──────
 ```
 
+> The state machine is defined in `scripts/state_machine.py` and consumed by `status.py`. To regenerate this table, run `python3 scripts/state_machine.py --render-markdown`. **Don't edit this table by hand** — single-source the change in `state_machine.py` and re-render.
+
 | State | Marker | Next action |
 |---|---|---|
-| `BRIEFED` | `BRIEF.md` exists | `/everglades-lock` |
-| `LOCKED` | `golden/expected.json` populated + `STATE.md.why` | `/everglades-jobs` |
-| `SCAFFOLDED` | `oracle/setup.py`, `solution/main.py`, `solution/shortcut.py` exist | `/everglades-verify` |
-| `CALIBRATED` | `verify` PASSES + `shortcut` FAILS | `/everglades-preview` |
-| `READY` | preview ≤ 2/8 + `lint` clean | `/everglades-export` |
-| `BORDERLINE` | preview 3/8 (proxy not conclusive) | harden + re-preview, OR `/everglades-export --force` if expert is confident |
-| `EXPORTED` | MANIFEST.md written | open RLS UI, create task, copy-paste per MANIFEST. Click magic-star → STEM Software Runner. |
+| `BRIEFED` | BRIEF.md exists | /everglades-lock |
+| `LOCKED` | golden/expected.json populated + STATE.md.why | /everglades-jobs |
+| `JOBS` | grader/grading_guide.md near-miss table populated | /everglades-scaffold |
+| `SCAFFOLDED` | oracle/setup.py + solution/main.py + solution/shortcut.py exist | /everglades-verify |
+| `CALIBRATED` | verify PASSES + shortcut FAILS | /everglades-preview |
+| `BORDERLINE` | preview 3/8 pass (proxy not conclusive) | harden + re-preview, OR /everglades-export --force |
+| `READY` | preview ≤ 2/8 pass + lint clean | /everglades-export |
+| `EXPORTED` | MANIFEST.md written | open RLS UI, paste per MANIFEST, click magic-star |
 
 The expert handles everything after EXPORTED in the RLS web UI: pasting, magic-star dispatch, watching Taiga, submitting for review. The skill is done.
 
@@ -233,6 +236,16 @@ Opus 4.7 × 8 attempts against 3 hard inverse tasks (all at Taiga 12.5%):
 | `scripts/lint.py` | Leak-checker on problem.md + oracle/setup.py |
 | `scripts/degeneracy.py` | Cross-sibling degeneracy check |
 | `scripts/export.py` | Write MANIFEST.md for a calibrated draft |
+| `scripts/grading.py` | Shared answer checker (used by verify + preview) |
+| `scripts/yaml_io.py` | YAML load/dump with inline-comment stripping |
+| `scripts/state_machine.py` | Canonical draft state machine; `--render-markdown` for SKILL.md |
+
+## Forward task preview path
+
+Proxy preview (`scripts/preview.py`) is **inverse-only**. Forward tasks use
+`simulation/` instead of `oracle/setup.py`. Running preview on a forward draft
+raises a clear error. Forward tasks ship via `/everglades-export` → Taiga directly
+without a local proxy signal. See `reference/forward-task-guide.md`.
 
 ## When NOT to use this skill
 

@@ -78,14 +78,7 @@ def list_drafts() -> list[dict]:
     return drafts
 
 
-NEXT_CMD = {
-    "BRIEFED": "/everglades-lock",
-    "LOCKED": "/everglades-jobs",
-    "JOBS": "/everglades-scaffold",
-    "SCAFFOLDED": "/everglades-verify",
-    "CALIBRATED": "/everglades-preview",
-    "READY": "/everglades-export  # then copy-paste to RLS UI",
-}
+from state_machine import next_action
 
 
 def main():
@@ -100,15 +93,12 @@ def main():
     for d in drafts:
         print(f"{d['draft']:35s}  {d['state']:14s}  {d['direction']:8s}  {d['preview']:10s}")
     print()
-    # Suggest next move
-    in_progress = [d for d in drafts if d["state"] not in ("READY", "EXPORTED")]
+    # Suggest next move using the single-source state machine
+    in_progress = [d for d in drafts if d["state"] not in ("EXPORTED",)]
     if in_progress:
         next_d = in_progress[0]
-        next_cmd = NEXT_CMD.get(next_d["state"], "/everglades-step")
-        print(f"Suggested next move: {next_cmd} {next_d['draft']}")
-    elif any(d["state"] == "READY" for d in drafts):
-        ready = next(d for d in drafts if d["state"] == "READY")
-        print(f"Suggested next move: /everglades-export {ready['draft']}  # copy-paste to RLS UI")
+        cmd = next_action(next_d["state"])
+        print(f"Suggested next move: {cmd}  →  {next_d['draft']}")
     else:
         print("All drafts exported. /everglades-ideate <N> to start another batch.")
 

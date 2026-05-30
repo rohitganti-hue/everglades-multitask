@@ -27,7 +27,7 @@ import importlib.util
 import json
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import paths
@@ -58,6 +58,16 @@ def load_oracle_module(draft_dir: Path, *, attempt_idx: int | None = None):
     """
     oracle_path = paths.oracle_setup(draft_dir)
     if not oracle_path.exists():
+        # Forward tasks don't have an oracle — they use simulation/ instead.
+        # Preview eval is INVERSE-ONLY: forward tasks would need a different
+        # harness (Anthropic agent + simulation tool, no oracle to mock).
+        if paths.simulation_dir(draft_dir).exists():
+            raise FileNotFoundError(
+                f"This is a FORWARD task ({draft_dir.name}/simulation/ exists). "
+                f"The proxy preview is inverse-only — forward tasks ship to "
+                f"Taiga directly via /everglades-export without a local proxy "
+                f"signal. See SKILL.md 'Forward task preview path' for context."
+            )
         raise FileNotFoundError(f"No oracle/setup.py at {oracle_path}")
     # Unique module name per attempt so importlib gives a distinct namespace
     suffix = f"_a{attempt_idx}" if attempt_idx is not None else ""
@@ -285,11 +295,11 @@ async def run_preview(draft_dir: Path, *, attempts: int, model: str) -> dict:
         "pass_rate": passes / attempts,
         "elapsed_s": round(elapsed, 1),
         "attempts_detail": results,
-        "ran_at": datetime.utcnow().isoformat() + "Z",
+        "ran_at": datetime.now(timezone.utc).isoformat(),
     }
     runs = paths.runs_dir(draft_dir)
     runs.mkdir(parents=True, exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     (runs / f"preview_{ts}.json").write_text(json.dumps(summary, default=str, indent=2))
     return summary
 
