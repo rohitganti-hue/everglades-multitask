@@ -2,5 +2,5 @@
   "answer": null,
   "tolerance": 0,
   "unit": "<domain-specific>",
-  "notes": "Canonical Everglades CLI location: golden/expected.json. Maps to the RLS 'Golden Response' (answer string) + 'Tolerance' (numeric) fields on push. Tolerance: 0 = exact match, 0.05 = 5% relative tolerance."
+  "notes": "Canonical Everglades CLI location: golden/expected.json. Maps to the RLS 'Golden Response' (answer string) + 'Tolerance' (numeric) fields on push. Tolerance: 0 = exact match, 0.05 = 5% relative tolerance. 'answer' is the bare value the model submits (number, list/tuple, or string) — grading compares it within 'tolerance'. 'unit' is metadata only and is NOT used by grading; state the required unit in problem.md so the model submits a bare value."
 }

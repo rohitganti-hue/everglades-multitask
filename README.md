@@ -174,7 +174,7 @@ Matches the **canonical Everglades CLI task structure** (per master instructions
 | `config.yaml` → `domain` / `sub_domain` / `direction` / `simulator` | **Domain** / **Subdomain** / **Directionality** / **Required Tool** | dropdown + text |
 | _(write fresh in RLS UI)_ | **Explanation/Context** | text |
 
-**AI Use Policy:** The skill helps scaffold `oracle/setup.py`, `solution/main.py`, and `solution/shortcut.py`. The skill does NOT write `problem.md`, `reasoning_trap.md`, `grader/grading_guide.md`, or your explanation. **You own the science.**
+**AI Use Policy:** The skill helps with *code* — `oracle/setup.py` and `solution/main.py` (and scaffolds `solution/shortcut.py` as a mechanical implementation of the reasoning trap *you* wrote). It does NOT write — or even format — `problem.md`, `reasoning_trap.md`, `grader/grading_guide.md`, or your explanation. **You own the science.**
 
 ## Preview eval — how it works
 

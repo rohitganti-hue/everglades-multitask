@@ -1,6 +1,6 @@
 # 5 Strategies to Stump LLMs (skill-internal reference)
 
-When preview shows pass rate ≥3/8 (TOO_EASY), apply these in order:
+When preview shows the task is too easy (**4+/8**; 3/8 is borderline), apply these in order:
 
 ## Strategy 1 — Hide the method, not the science
 
@@ -48,3 +48,10 @@ The skill suggests fixes based on the preview transcript:
   → Strategy 4
 - Passing attempts solved sub-pieces sequentially with per-piece feedback →
   Strategy 5
+
+## A sixth lever — near-degeneracies & edge cases
+
+Not one of the core 5, but equally effective: design the answer to sit near a degeneracy
+or edge case, so a careful-but-shallow solver lands on the wrong branch. This lives in
+`reference/oracle-design.md` (degeneracy / edge-case design) and is enforced for sibling
+sets by `/everglades-degeneracy-check`.

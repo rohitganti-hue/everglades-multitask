@@ -56,7 +56,12 @@ See: `oracle-design.md`.
 
 Run `main.py` against `oracle.py` → must pass.
 Run `shortcut.py` against `oracle.py` → must FAIL.
+Vary the oracle's noise seed and re-run `main.py` → must still pass within tolerance
+(the answer must not drift with the seed — canonical robustness check).
 Run `/everglades-preview` (Opus 4.7 × 8 attempts) → target ≤2/8 pass rate.
+
+The local preview is a **proxy** for the canonical gate — the real Taiga 16-model eval
+(STEM Software Runner in RLS), where **≤4/16 must pass**. Preview ≤2/8 predicts ≤4/16.
 
 **Approve only if (a) careful passes, (b) shortcuts fail for the reasons you
 intended, (c) preview is in range.**
@@ -76,7 +81,8 @@ The skill won't let you advance past a step until its artifact exists. State
 sequence:
 
 ```
-BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → PUSHED
+BRIEFED → LOCKED → JOBS → SCAFFOLDED → CALIBRATED → READY → EXPORTED
 ```
 
-Each transition has a specific command and a specific check.
+Each transition has a specific command and a specific check. `EXPORTED` is the terminal
+local state — after it, the expert pastes into the RLS UI and dispatches Taiga manually.

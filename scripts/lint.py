@@ -6,8 +6,9 @@ Catches:
   - Method-name leaks in problem.md (Strategy 1 violation)
   - Canonical-target tokens (Strategy 2 violation)
   - Judgment-style oracle modes (`check_*`, `validate_*`, `is_correct`) in oracle/setup.py
+  - Possible hidden-parameter leak (oracle returns a HIDDEN_PARAMS value directly)
   - Missing `submit_answer` instruction in prompt
-  - Missing budget in oracle
+  - Missing budget, help mode, or noise injection in oracle
 
 CLI:
   python3 lint.py <draft_dir>
@@ -125,6 +126,20 @@ def lint_oracle(path: Path) -> list[dict]:
             "severity": "warn",
             "rule": "no-help-mode",
             "msg": "oracle/setup.py has no help mode. Add one that lists modes without recommending strategies.",
+        })
+
+    if not re.search(r"\b(noise|sigma|rng|random|gauss|normal|poisson)\b", text, re.I):
+        findings.append({
+            "severity": "warn",
+            "rule": "no-noise",
+            "msg": "oracle/setup.py shows no sign of noise injection. Pure clean signal makes inverse inference trivial — add domain-calibrated noise (gaussian, 1/f, shot, ...).",
+        })
+
+    if re.search(r"return\s+HIDDEN_PARAMS\b", text) or re.search(r":\s*HIDDEN_PARAMS\[", text):
+        findings.append({
+            "severity": "info",
+            "rule": "possible-hidden-leak",
+            "msg": "oracle/setup.py may return a HIDDEN_PARAMS value directly. The oracle must return observations derived from the hidden params, never the params themselves (even derived).",
         })
 
     return findings

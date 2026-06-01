@@ -5,14 +5,18 @@ CLI structure: `oracle/setup.py`). On RLS push, this file's contents are
 uploaded to the "Oracle File" custom field.
 
 INSTRUCTIONS:
+  - The public entry point is `handle_query(mode, parameters)` — this is the RLS /
+    stemcomp contract. (`query_oracle` is kept as an alias for the skill's tooling.)
   - Replace HIDDEN_PARAMS with your task's hidden parameters.
   - Replace _system_observation with the domain physics that produces observations.
-  - Add at least 2 modes. One must be `help` (lists modes but doesn't recommend).
+  - Add at least 2 modes. One must be `help` (returns a one-line `description` + the
+    mode list, but never recommends a mode or names the method).
   - Add noise calibrated to the domain (gaussian, 1/f, shot, etc.).
   - Set a budget. The model should not be able to brute-force every mode.
   - The oracle MUST return observations, not judgments. No accepted/rejected,
-    no close-enough. If you find yourself writing `check_*` or `validate_*`,
-    stop — that's a grader, not an instrument. (See: Strategy 3 / Failure Mode 2.)
+    no close-enough, and never return a HIDDEN_PARAMS value directly (even derived).
+    If you find yourself writing `check_*` or `validate_*`, stop — that's a grader,
+    not an instrument. (See: Strategy 3 / Failure Mode 2.)
 """
 from __future__ import annotations
 import numpy as np
@@ -43,8 +47,16 @@ def _noise(shape, sigma: float):
     return _RNG.normal(0, sigma, shape)
 
 
-def query_oracle(mode: str, parameters: dict | None = None):
-    """The PUBLIC interface the model can call. Routes to internal modes."""
+# Non-Gaussian noise stubs — uncomment + tune to your domain (see oracle-design.md):
+# def _noise_pink(n, sigma):    # 1/f noise — defeats naive averaging (time-series, seismology)
+#     white = _RNG.normal(0, sigma, n)
+#     return np.cumsum(white) - np.mean(np.cumsum(white))
+# def _noise_shot(counts):      # Poisson/shot noise (photon counting, particle physics)
+#     return _RNG.poisson(np.clip(counts, 0, None)).astype(float) - counts
+
+
+def handle_query(mode: str, parameters: dict | None = None):
+    """The PUBLIC interface the model can call (RLS/stemcomp contract). Routes to modes."""
     global _used
     parameters = parameters or {}
 
@@ -53,6 +65,7 @@ def query_oracle(mode: str, parameters: dict | None = None):
         # DO NOT recommend a mode. DO NOT mention what each measures in
         # domain-physics terms (that's a method-name leak).
         return {
+            "description": "<one neutral line: what kind of system this is — no method names, nothing that reveals the rule>",
             "modes": {
                 "mode_a": "{...} -> {observation: array}",
                 "mode_b": "{...} -> {observation: array}",
@@ -71,3 +84,7 @@ def query_oracle(mode: str, parameters: dict | None = None):
         obs = obs + _noise(obs.shape, sigma=0.02 * np.abs(obs).mean())
 
     return {"observation": obs.tolist() if isinstance(obs, np.ndarray) else obs, "unit": "<domain-specific>"}
+
+
+# Alias for the skill's tooling (preview / degeneracy). RLS / stemcomp call `handle_query`.
+query_oracle = handle_query

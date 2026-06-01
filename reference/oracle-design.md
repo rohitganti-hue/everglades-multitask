@@ -8,12 +8,12 @@
 
 ```python
 # ❌ Grader-like (bad)
-def query_oracle(mode, params):
+def handle_query(mode, params):
     if mode == "check_topology":
         return {"correct": params["topology"] == HIDDEN_TOPOLOGY}
 
 # ✅ Instrument-like (good)
-def query_oracle(mode, params):
+def handle_query(mode, params):
     if mode == "s_parameters":
         return {"freq_GHz": ..., "s21_dB": ...}
 ```
@@ -52,7 +52,8 @@ Set a budget so a careful solver can investigate but brute-force can't. Typical:
 
 `/everglades-lint <draft>` checks oracle.py for:
 
-- `check_*` / `validate_*` patterns
+- `check_*` / `validate_*` patterns (grader, not instrument)
+- Hidden-parameter leak — a `return` that hands back a `HIDDEN_PARAMS` value
 - Missing `help` mode
 - No budget enforcement
 - Missing noise injection
