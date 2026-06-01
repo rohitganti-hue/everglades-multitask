@@ -77,6 +77,29 @@ Skill: scaffolds 3 drafts in canonical CLI layout. Walks Playbook 1-4
 
 The skill's job ends at `/everglades-export`. Everything after happens in the RLS web UI.
 
+## Where your drafts live
+
+All drafts are created under **`~/everglades-drafts/<draft-id>/`** — one folder per task. That's where you open `problem.md`, `reasoning_trap.md`, and `grader/grading_guide.md` to write your science. `/everglades-status` prints the path for each draft.
+
+## Reduce permission prompts (lower AHT)
+
+Claude Code asks before each script run and file edit; across a session those prompts add up. Cut them **safely** by allow-listing only this skill's operations in `~/.claude/settings.json` (don't use `--dangerously-skip-permissions` or a blanket `Bash(*)`):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 ~/.claude/skills/everglades-multitask/scripts/*.py)",
+      "Read(~/everglades-drafts/**)",
+      "Edit(~/everglades-drafts/**)",
+      "Write(~/everglades-drafts/**)"
+    ]
+  }
+}
+```
+
+`~` expands and the file reloads live. Or pick **"Yes, don't ask again"** when prompted for a script. Run `/permissions` to review what's allowed.
+
 ## Repository layout
 
 ```
