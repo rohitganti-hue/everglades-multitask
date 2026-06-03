@@ -32,7 +32,13 @@ import urllib.request
 from pathlib import Path
 
 SCHEMA_VERSION = 1
-CONFIG_PATH = Path.home() / ".everglades" / "config.json"
+
+
+def _eg_home() -> Path:
+    return Path(os.environ.get("EVERGLADES_HOME") or Path.home())
+
+
+CONFIG_PATH = _eg_home() / ".everglades" / "config.json"
 
 
 # --- config / paths (stdlib-only; no skill imports so the hook can't dep-fail) ---
@@ -48,7 +54,7 @@ def _drafts_root() -> Path:
     override = os.environ.get("EVERGLADES_DRAFTS_ROOT")
     if override:
         return Path(override).expanduser()
-    return Path.home() / "everglades-drafts"
+    return _eg_home() / "everglades-drafts"
 
 
 # --- tiny parsers (mirror status.py, kept inline to stay dependency-free) ---

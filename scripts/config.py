@@ -9,7 +9,13 @@ import os
 import sys
 from pathlib import Path
 
-CONFIG_PATH = Path.home() / ".everglades" / "config.json"
+def _eg_home() -> Path:
+    """Home base for the skill's config + drafts. EVERGLADES_HOME overrides ~
+    (used to run multiple expert profiles / tests on one machine)."""
+    return Path(os.environ.get("EVERGLADES_HOME") or Path.home())
+
+
+CONFIG_PATH = _eg_home() / ".everglades" / "config.json"
 
 
 def load(*, require_anthropic: bool = False, require_telemetry: bool = False):
@@ -64,4 +70,4 @@ DOMAIN_CODES = ("Samples", "EG-1", "EG-2", "EG-3", "EG-4", "EG-5", "EG-6", "EG-7
 
 def workspace_root():
     """The expert's draft workspace."""
-    return Path.home() / "everglades-drafts"
+    return _eg_home() / "everglades-drafts"
