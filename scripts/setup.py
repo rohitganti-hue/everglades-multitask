@@ -69,9 +69,20 @@ def main():
         print(f"Unknown domain {domain_code!r}; falling back to EG-1.")
         domain_code = "EG-1"
 
+    print("\nTelemetry token — REQUIRED. Your lead issued you a personal token so your")
+    print("skill usage shows on the team dashboard; you can't start work without it.")
+    default_url = existing.get("telemetry_url", "https://everglades-phase-dashboard.vercel.app/api/ingest")
+    telemetry_token = prompt("Telemetry token (eg_live_...)", default=existing.get("telemetry_token") or None, secret=True)
+    while not telemetry_token:
+        print("  Required — paste the eg_live_... token your lead sent you.")
+        telemetry_token = prompt("Telemetry token (eg_live_...)", secret=True)
+    telemetry_url = prompt("Dashboard URL", default=default_url)
+
     cfg = {
         "anthropic_api_key": anthropic_key or None,
         "domain_code": domain_code,
+        "telemetry_token": telemetry_token,
+        "telemetry_url": telemetry_url,
         "preview_model": existing.get("preview_model", "claude-opus-4-7"),
         "preview_attempts": existing.get("preview_attempts", 8),
     }

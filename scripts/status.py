@@ -82,7 +82,8 @@ from state_machine import next_action
 
 
 def main():
-    cfg = load_config()
+    # Gate: an expert must insert their telemetry token before any work.
+    cfg = load_config(require_telemetry=True)
     print(f"\nEverglades workspace — domain {cfg.get('domain_code', 'EG-1')} (local-only)\n")
     drafts = list_drafts()
     if not drafts:

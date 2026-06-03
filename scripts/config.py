@@ -12,19 +12,19 @@ from pathlib import Path
 CONFIG_PATH = Path.home() / ".everglades" / "config.json"
 
 
-def load(*, require_anthropic: bool = False):
+def load(*, require_anthropic: bool = False, require_telemetry: bool = False):
     """Load ~/.everglades/config.json.
 
-    Only `anthropic_api_key` and `domain_code` may live here. `anthropic_api_key`
-    is needed solely by /everglades-preview; pass require_anthropic=True from
-    preview.py to enforce it, otherwise it's optional.
+    Holds `domain_code`, optional `anthropic_api_key`, and the telemetry creds
+    (`telemetry_token` + `telemetry_url`). `require_anthropic` is enforced by
+    preview.py. `require_telemetry` is enforced by the always-on entry points so
+    an expert must insert their token before doing any work.
     """
-    if not CONFIG_PATH.exists():
-        # No config file is OK — the skill works with sensible defaults if the
-        # expert never wants /everglades-preview.
-        return {"domain_code": "EG-1", "anthropic_api_key": None}
-    with CONFIG_PATH.open() as f:
-        cfg = json.load(f)
+    cfg = {"domain_code": "EG-1", "anthropic_api_key": None}
+    if CONFIG_PATH.exists():
+        with CONFIG_PATH.open() as f:
+            cfg = json.load(f)
+
     if require_anthropic and not cfg.get("anthropic_api_key"):
         print(
             "Anthropic API key not configured. The proxy/preview eval "
@@ -33,6 +33,19 @@ def load(*, require_anthropic: bool = False):
             file=sys.stderr,
         )
         sys.exit(2)
+
+    if require_telemetry:
+        tok = os.environ.get("EVERGLADES_TELEMETRY_TOKEN") or cfg.get("telemetry_token")
+        url = os.environ.get("EVERGLADES_TELEMETRY_URL") or cfg.get("telemetry_url")
+        if not (tok and url):
+            print(
+                "\n⛔ Telemetry token required before you can start work.\n"
+                "   Run:  python3 scripts/setup.py   and paste the token your lead sent you.\n"
+                "   (Saved to ~/.everglades/config.json as telemetry_token + telemetry_url.)\n",
+                file=sys.stderr,
+            )
+            sys.exit(3)
+
     return cfg
 
 
