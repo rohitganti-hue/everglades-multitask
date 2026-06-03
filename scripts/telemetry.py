@@ -8,7 +8,7 @@ sends task content: no problem.md text, no oracle/solution code, no answers.
 Designed to run as a Claude Code `Stop` hook (fires at the end of each turn), so
 the dashboard reflects "as of the expert's last turn." It is deliberately:
   - stdlib-only (no numpy/pyyaml/anthropic import) so it can't fail on a missing dep,
-  - fail-silent and non-blocking (≤1.5s, never raises) so it can't break a session,
+  - fail-silent and non-blocking (≤5s, never raises) so it can't break a session,
   - a no-op unless a token + url are configured (opt-in).
 
 Config (env wins over config.json):
@@ -224,7 +224,7 @@ def _post(url: str, token: str, payload: dict, debug: bool) -> bool:
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=1.5) as resp:
+        with urllib.request.urlopen(req, timeout=5.0) as resp:
             if debug:
                 print(f"[telemetry] POST {resp.status}", file=sys.stderr)
             return True
