@@ -2,9 +2,13 @@
 """First-run setup wizard for the everglades-multitask skill.
 
 The skill is LOCAL-ONLY: builds + calibrates drafts on disk, then the expert
-copy-pastes into the RLS web UI. We only ask for:
+copy-pastes into the RLS web UI. We ask for:
   - Anthropic API key (OPTIONAL — for /everglades-preview)
   - Domain code (lets the scaffolder pick the right anchor example)
+  - Telemetry token (REQUIRED — so usage shows on the team dashboard)
+
+It also auto-wires the telemetry Stop hook so progress reports without any
+manual settings.json editing.
 """
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from config import CONFIG_PATH, DOMAIN_CODES, save, workspace_root
+from config import CONFIG_PATH, DOMAIN_CODES, save, workspace_root, _eg_home
 
 
 def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
@@ -29,6 +33,41 @@ def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
     if not val and default is not None:
         return default
     return val
+
+
+def wire_stop_hook() -> None:
+    """Install the telemetry Stop hook into ~/.claude/settings.json so usage
+    reports automatically at the end of each Claude Code turn.
+
+    Idempotent and non-destructive: it merges into any existing settings/hooks
+    and never adds a duplicate. Without this, the dashboard only updates if you
+    run telemetry.py by hand — the #1 reason an expert shows 'activated' but
+    then appears stuck while they're actually working.
+    """
+    settings = _eg_home() / ".claude" / "settings.json"
+    cmd = "python3 ~/.claude/skills/everglades-multitask/scripts/telemetry.py"
+    try:
+        settings.parent.mkdir(parents=True, exist_ok=True)
+        cfg = {}
+        if settings.exists() and settings.stat().st_size:
+            cfg = json.loads(settings.read_text())
+        stop = cfg.setdefault("hooks", {}).setdefault("Stop", [])
+        already = any(
+            isinstance(h, dict) and h.get("command") == cmd
+            for entry in stop
+            if isinstance(entry, dict)
+            for h in (entry.get("hooks") or [])
+        )
+        if already:
+            print(f"✓ Telemetry reporting already wired ({settings})")
+            return
+        stop.append({"hooks": [{"type": "command", "command": cmd}]})
+        settings.write_text(json.dumps(cfg, indent=2))
+        print(f"✓ Wired telemetry reporting → {settings}")
+        print("  (your progress posts to the dashboard at the end of each turn)")
+    except Exception as e:  # never let hook-wiring break setup
+        print(f"⚠ Could not auto-wire the Stop hook: {e}")
+        print("  Add it manually — see TELEMETRY.md §3.")
 
 
 def main():
@@ -92,6 +131,12 @@ def main():
         print("  (Anthropic key skipped — /everglades-preview will be disabled.)")
     workspace_root().mkdir(parents=True, exist_ok=True)
     print(f"✓ Draft workspace: {workspace_root()}")
+
+    wire_stop_hook()
+    print("")
+    print("To verify reporting now (and show up on the board immediately), run:")
+    print("  python3 ~/.claude/skills/everglades-multitask/scripts/telemetry.py --debug")
+
     print("\nReady. In Claude Code, run /everglades-status to begin.\n")
 
 
