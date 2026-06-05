@@ -152,6 +152,18 @@ def _direction(draft: Path) -> str:
 
 # --- snapshot construction ---
 
+def _rls(draft: Path):
+    """Self-reported RLS linkage (written by rls.py). Identifier + status only — no content."""
+    try:
+        d = json.loads((draft / "rls.json").read_text())
+        tid = d.get("rls_task_id")
+        if tid:
+            return {"task_id": tid, "status": d.get("status") or "submitted"}
+    except Exception:
+        pass
+    return None
+
+
 def build_draft_vector(draft: Path) -> dict:
     preview = _latest_run(draft, "preview")
     pass_rate = None
@@ -183,6 +195,7 @@ def build_draft_vector(draft: Path) -> dict:
         "phase": _state_field(draft),
         "steps": steps,
         "preview_pass_rate": pass_rate,
+        "rls": _rls(draft),
         "last_activity": round(_last_activity(draft), 3),
     }
 
@@ -200,6 +213,8 @@ def build_snapshot(cfg: dict) -> dict:
 
     exported = [d for d in drafts if d["steps"]["exported"] or d["phase"] == "EXPORTED"]
     iterating = [d for d in drafts if d not in exported]
+    on_rls = [d for d in drafts if d.get("rls")]
+    approved = [d for d in drafts if (d.get("rls") or {}).get("status") == "approved"]
     active = max(iterating or drafts, key=lambda d: d["last_activity"], default=None)
 
     return {
@@ -212,6 +227,8 @@ def build_snapshot(cfg: dict) -> dict:
             "total_drafts_present": len(drafts),
             "iterating": len(iterating),       # present and not yet exported
             "exported": len(exported),         # reached EXPORTED / MANIFEST written ("chose to upload")
+            "on_rls": len(on_rls),             # self-reported as pasted into RLS
+            "approved": len(approved),         # self-reported approved on RLS
             "active_draft": active["draft_id"] if active else None,
             "sibling_mode": (root / "_shared").exists(),  # Workflow B in play
         },

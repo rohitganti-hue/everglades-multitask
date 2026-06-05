@@ -81,6 +81,7 @@ All commands operate on `<draft-id>` and run locally. No network calls except `/
 | Command | What it does |
 |---|---|
 | `/everglades-export <draft>` | Writes MANIFEST.md to the draft, listing exactly which file goes to which RLS form field. Then the expert opens https://studio.mercor.com/, creates a task in their domain world, and copy-pastes from each file. |
+| `/everglades-rls <draft> --task-id <id>` | After pasting a draft into RLS, record which RLS task it became (later `--status approved`). The only signal the dashboard gets about what actually shipped + got approved. Stores an identifier + status only — never task content. |
 
 ## State machine
 
@@ -104,6 +105,8 @@ BRIEFED → LOCKED → SCAFFOLDED → CALIBRATED → READY → EXPORTED → (exp
 | `EXPORTED` | MANIFEST.md written | open RLS UI, paste per MANIFEST, click magic-star |
 
 The expert handles everything after EXPORTED in the RLS web UI: pasting, magic-star dispatch, watching Taiga, submitting for review. The skill is done.
+
+**Link it to RLS (self-report).** The skill can't see RLS, so once the expert pastes an EXPORTED draft into the RLS UI, prompt: *"Is it on RLS now? What's the RLS task id/link?"* and run `/everglades-rls <draft> --task-id <id>` (status defaults to `submitted`; bump to `approved` later). That linkage is what populates the dashboard's **On-RLS / Approved** funnel — the skill still makes no RLS API calls.
 
 ## Workspace layout
 
@@ -208,6 +211,7 @@ When the expert invokes you, follow this loop:
 7. **Refuse writing OR formatting the science.** When asked to write — or even clean up / proofread — `problem.md`, the reasoning trap, or grading guidance, refuse and direct to the playbook. The AI Use Policy prohibits LLM-formatted prompts too; grammar and formatting are the expert's responsibility.
 8. **Run preview defensively.** Before exporting, check that preview ran in the last 24 hrs and showed ≤ 2/8 pass. If not, recommend a fresh preview.
 9. **When all calibrated, run /everglades-export.** Then point the expert to the RLS UI tersely: "Exported. Open RLS, create a task in your domain, paste per `MANIFEST.md`, click magic-star."
+10. **After they paste into RLS, link it.** Ask tersely: "On RLS now? Paste the task id/link." then run `/everglades-rls <draft> --task-id <id>`. Tell them to run `/everglades-rls <draft> --status approved` when it's approved — that's what fills the dashboard's On-RLS / Approved counts.
 
 ## Response style & the writer's hand-off
 
