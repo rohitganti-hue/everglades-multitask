@@ -136,6 +136,13 @@ def main():
     print(f"world, and copy-paste each file per the MANIFEST mapping. Then click")
     print(f"magic-star → STEM Software Runner to launch the Taiga 16-model eval.\n")
 
+    # Auto-sync this phase advance (→ EXPORTED) to the dashboard (best-effort).
+    try:
+        from tracker import sync
+        sync()
+    except Exception:
+        pass
+
 
 if __name__ == "__main__":
     main()

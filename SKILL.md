@@ -82,6 +82,7 @@ All commands operate on `<draft-id>` and run locally. No network calls except `/
 |---|---|
 | `/everglades-export <draft>` | Writes MANIFEST.md to the draft, listing exactly which file goes to which RLS form field. Then the expert opens https://studio.mercor.com/, creates a task in their domain world, and copy-pastes from each file. |
 | `/everglades-rls <draft> --task-id <id>` | After pasting a draft into RLS, record which RLS task it became (later `--status approved`). The only signal the dashboard gets about what actually shipped + got approved. Stores an identifier + status only — never task content. |
+| `/everglades-submit [draft]` | Push current progress to the dashboard now ("submit to tracker") via `scripts/tracker.py`. Runs automatically as phases advance; the expert can also run it manually anytime — prompt this when a task is finalized. |
 
 ## State machine
 
@@ -202,7 +203,7 @@ That stops the prompts for the skill's scripts and for edits to your own draft f
 
 When the expert invokes you, follow this loop:
 
-1. **Check setup.** If `~/.everglades/config.json` missing, run setup wizard. Else load config and note the configured `domain_code`.
+1. **Check setup (token first).** If `~/.everglades/config.json` is missing OR has no telemetry token, run the setup wizard — its FIRST prompt is the dashboard access token, and the expert can't start work without it. Else load config and note the configured `domain_code`.
 2. **Enforce same-domain default.** Every brief or draft must match the configured domain. If a brief specifies a different domain, do NOT silently create a cross-domain draft — surface the mismatch and offer to re-run setup with the new domain or stick with the current one.
 3. **Read state.** `~/everglades-drafts/*/STATE.md` for all drafts. Build a unified picture.
 4. **Suggest next move.** If the expert hasn't said what they want, run `/everglades-status` and surface the highest-leverage move.
@@ -212,6 +213,8 @@ When the expert invokes you, follow this loop:
 8. **Run preview defensively.** Before exporting, check that preview ran in the last 24 hrs and showed ≤ 2/8 pass. If not, recommend a fresh preview.
 9. **When all calibrated, run /everglades-export.** Then point the expert to the RLS UI tersely: "Exported. Open RLS, create a task in your domain, paste per `MANIFEST.md`, click magic-star."
 10. **After they paste into RLS, link it.** Ask tersely: "On RLS now? Paste the task id/link." then run `/everglades-rls <draft> --task-id <id>`. Tell them to run `/everglades-rls <draft> --status approved` when it's approved — that's what fills the dashboard's On-RLS / Approved counts.
+11. **Sync the dashboard as phases advance.** The `verify`, `preview`, and `export` commands push automatically. After you advance a *Claude-driven* phase (brief / lock / jobs / scaffold) by writing `STATE.md`, run `python3 scripts/telemetry.py` (a.k.a. `/everglades-submit`) so the board reflects the new phase right away — don't rely on the passive Stop hook (some environments block it).
+12. **At task end, offer to submit.** When a draft hits READY (or after export), prompt tersely: "Task finalized — submit to tracker? (`/everglades-submit`)" and run it on yes.
 
 ## Response style & the writer's hand-off
 

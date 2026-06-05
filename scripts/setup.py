@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """First-run setup wizard for the everglades-multitask skill.
 
-The skill is LOCAL-ONLY: builds + calibrates drafts on disk, then the expert
-copy-pastes into the RLS web UI. We ask for:
-  - Anthropic API key (OPTIONAL — for /everglades-preview)
-  - Domain code (lets the scaffolder pick the right anchor example)
-  - Telemetry token (REQUIRED — so usage shows on the team dashboard)
-
-It also auto-wires the telemetry Stop hook so progress reports without any
-manual settings.json editing.
+The FIRST thing it asks is the dashboard access token (required) — the expert
+can't start work without it. Then the domain, then the optional Anthropic key.
+It also wires the telemetry hook and sends an initial snapshot so the expert
+shows on the dashboard immediately.
 """
 from __future__ import annotations
 
@@ -36,13 +32,9 @@ def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
 
 
 def wire_stop_hook() -> None:
-    """Install the telemetry Stop hook into ~/.claude/settings.json so usage
-    reports automatically at the end of each Claude Code turn.
-
-    Idempotent and non-destructive: it merges into any existing settings/hooks
-    and never adds a duplicate. Without this, the dashboard only updates if you
-    run telemetry.py by hand — the #1 reason an expert shows 'activated' but
-    then appears stuck while they're actually working.
+    """Install the telemetry Stop hook into ~/.claude/settings.json so usage also
+    reports at the end of each turn (best-effort — some environments block it, which
+    is why the skill ALSO syncs explicitly as each phase advances). Idempotent.
     """
     settings = _eg_home() / ".claude" / "settings.json"
     cmd = "python3 ~/.claude/skills/everglades-multitask/scripts/telemetry.py"
@@ -58,26 +50,19 @@ def wire_stop_hook() -> None:
             if isinstance(entry, dict)
             for h in (entry.get("hooks") or [])
         )
-        if already:
-            print(f"✓ Telemetry reporting already wired ({settings})")
-            return
-        stop.append({"hooks": [{"type": "command", "command": cmd}]})
-        settings.write_text(json.dumps(cfg, indent=2))
-        print(f"✓ Wired telemetry reporting → {settings}")
-        print("  (your progress posts to the dashboard at the end of each turn)")
-    except Exception as e:  # never let hook-wiring break setup
-        print(f"⚠ Could not auto-wire the Stop hook: {e}")
-        print("  Add it manually — see TELEMETRY.md §3.")
+        if not already:
+            stop.append({"hooks": [{"type": "command", "command": cmd}]})
+            settings.write_text(json.dumps(cfg, indent=2))
+    except Exception:
+        pass  # never let hook-wiring break setup; the per-phase sync covers it
 
 
 def main():
     print("=== Everglades Multitask Skill — First-Run Setup ===\n")
     print(
-        "This skill is LOCAL-ONLY. It scaffolds + calibrates Everglades inverse\n"
-        "and forward task drafts on your machine. When a draft is ready, you\n"
-        "copy-paste it into the RLS web UI (https://studio.mercor.com/) and\n"
-        "click 'magic-star → STEM Software Runner' there to launch Taiga.\n"
-        "No RLS API key needed.\n"
+        "This skill is LOCAL-ONLY. It scaffolds + calibrates Everglades task drafts\n"
+        "on your machine; when one is ready you paste it into the RLS web UI. Your\n"
+        "progress is reported to the team dashboard as you work.\n"
     )
     existing = {}
     if CONFIG_PATH.exists():
@@ -88,34 +73,34 @@ def main():
         except Exception:
             existing = {}
 
-    print("Anthropic API key — OPTIONAL. Only used by /everglades-preview (the")
-    print("proxy eval: Opus 4.7 × 8 attempts via tool-use against your local")
-    print("oracle.py). Press Enter to skip; everything else still works.")
+    # 1) Dashboard access token — FIRST and REQUIRED.
+    print("Dashboard access token — REQUIRED. Your lead sent you a personal token")
+    print("(eg_live_...) so your task progress shows on the team dashboard. You")
+    print("cannot start work without it.")
+    default_url = existing.get("telemetry_url", "https://everglades-phase-dashboard.vercel.app/api/ingest")
+    telemetry_token = prompt("Dashboard access token (eg_live_...)", default=existing.get("telemetry_token") or None, secret=True)
+    while not telemetry_token:
+        print("  Required — paste the eg_live_... token your lead sent you.")
+        telemetry_token = prompt("Dashboard access token (eg_live_...)", secret=True)
+    telemetry_url = prompt("Dashboard URL", default=default_url)
+
+    # 2) Domain.
+    print("\nWhich domain are you working in?")
+    for code in DOMAIN_CODES:
+        print(f"  {code}")
+    domain_code = prompt("Domain code (e.g. EG-1, EG-7)", default=existing.get("domain_code", "EG-1"))
+    if domain_code not in DOMAIN_CODES:
+        print(f"Unknown domain {domain_code!r}; falling back to EG-1.")
+        domain_code = "EG-1"
+
+    # 3) Anthropic key — OPTIONAL.
+    print("\nAnthropic API key — OPTIONAL. Only used by /everglades-preview (the proxy")
+    print("eval). Press Enter to skip; everything else still works.")
     anthropic_key = prompt(
         "Anthropic API key (starts with sk-ant-..., or blank to skip)",
         default=existing.get("anthropic_api_key", ""),
         secret=True,
     )
-
-    print("\nWhich domain are you working in?")
-    for code in DOMAIN_CODES:
-        print(f"  {code}")
-    domain_code = prompt(
-        "Domain code (e.g. EG-1, EG-7)",
-        default=existing.get("domain_code", "EG-1"),
-    )
-    if domain_code not in DOMAIN_CODES:
-        print(f"Unknown domain {domain_code!r}; falling back to EG-1.")
-        domain_code = "EG-1"
-
-    print("\nTelemetry token — REQUIRED. Your lead issued you a personal token so your")
-    print("skill usage shows on the team dashboard; you can't start work without it.")
-    default_url = existing.get("telemetry_url", "https://everglades-phase-dashboard.vercel.app/api/ingest")
-    telemetry_token = prompt("Telemetry token (eg_live_...)", default=existing.get("telemetry_token") or None, secret=True)
-    while not telemetry_token:
-        print("  Required — paste the eg_live_... token your lead sent you.")
-        telemetry_token = prompt("Telemetry token (eg_live_...)", secret=True)
-    telemetry_url = prompt("Dashboard URL", default=default_url)
 
     cfg = {
         "anthropic_api_key": anthropic_key or None,
@@ -133,9 +118,14 @@ def main():
     print(f"✓ Draft workspace: {workspace_root()}")
 
     wire_stop_hook()
-    print("")
-    print("To verify reporting now (and show up on the board immediately), run:")
-    print("  python3 ~/.claude/skills/everglades-multitask/scripts/telemetry.py --debug")
+
+    # Send an initial snapshot so the expert shows on the dashboard right away.
+    try:
+        from tracker import sync
+        print("\nSending an initial snapshot to the dashboard…")
+        sync(quiet=False)
+    except Exception:
+        pass
 
     print("\nReady. In Claude Code, run /everglades-status to begin.\n")
 

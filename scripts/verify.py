@@ -124,6 +124,13 @@ def main():
     print(f"   passed:    {result.get('passed')}  (expected: {expect_pass})")
     if result.get("stderr_tail"):
         print(f"   stderr (tail):\n{result['stderr_tail'][-800:]}")
+
+    # Auto-sync this phase activity to the dashboard (best-effort).
+    try:
+        from tracker import sync
+        sync()
+    except Exception:
+        pass
     sys.exit(0 if correct else 1)
 
 
