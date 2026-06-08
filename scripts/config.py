@@ -62,10 +62,18 @@ def save(cfg: dict):
     os.chmod(CONFIG_PATH, 0o600)
 
 
-# Valid domain codes. Used purely as a label so the scaffolding picks the right
-# anchor example. The skill is local-only — it makes NO RLS API calls, so no
-# world_id (or any other internal RLS identifier) is needed or stored here.
-DOMAIN_CODES = ("Samples", "EG-1", "EG-2", "EG-3", "EG-4", "EG-5", "EG-6", "EG-7", "EG-8", "EG-9")
+# The six Everglades domains (code → official name). Used as a label so the
+# scaffolder picks the right anchor example. The skill is local-only — it makes
+# NO RLS API calls, so no world_id (or other internal RLS identifier) is stored.
+DOMAINS = {
+    "EG-1": "Bioinformatics and Systems Biology",
+    "EG-2": "Computational Chemistry",
+    "EG-3": "Physics",
+    "EG-4": "Electrical Engineering",
+    "EG-5": "Mechanical and Structural Engineering",
+    "EG-6": "Applied Statistics and Mathematics",
+}
+DOMAIN_CODES = tuple(DOMAINS)  # ("EG-1", … "EG-6") — for validation / back-compat
 
 
 def workspace_root():

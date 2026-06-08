@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from config import CONFIG_PATH, DOMAIN_CODES, save, workspace_root, _eg_home
+from config import CONFIG_PATH, DOMAIN_CODES, DOMAINS, save, workspace_root, _eg_home
 
 
 def prompt(label: str, default: str | None = None, secret: bool = False) -> str:
@@ -86,9 +86,9 @@ def main():
 
     # 2) Domain.
     print("\nWhich domain are you working in?")
-    for code in DOMAIN_CODES:
-        print(f"  {code}")
-    domain_code = prompt("Domain code (e.g. EG-1, EG-7)", default=existing.get("domain_code", "EG-1"))
+    for code, name in DOMAINS.items():
+        print(f"  {code} — {name}")
+    domain_code = prompt("Domain code (e.g. EG-1, EG-3)", default=existing.get("domain_code", "EG-1"))
     if domain_code not in DOMAIN_CODES:
         print(f"Unknown domain {domain_code!r}; falling back to EG-1.")
         domain_code = "EG-1"

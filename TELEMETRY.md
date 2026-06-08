@@ -89,7 +89,7 @@ python3 ~/.claude/skills/everglades-multitask/scripts/telemetry.py --debug
   "drafts": [
     {
       "draft_id": "draft-b",
-      "domain": "EG-7",
+      "domain": "EG-3",
       "direction": "inverse",
       "phase": "CALIBRATED",         // canonical state from STATE.md (same as /everglades-status)
       "steps": {                     // artifact-presence sub-steps (finer than phase)

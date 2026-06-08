@@ -5,15 +5,15 @@ Full walkthroughs in the Everglades Hub Anchor Example Library.
 
 | # | Domain | Title | Shape |
 |---|---|---|---|
-| 1 | EG-1 Bioinformatics | BAM file with systematically wrong variant calls | candidate-set classification |
-| 2 | EG-2 Comp Chemistry | Unknown molecule from IR spectrum (candidate set) | candidate-set + multi-mode |
-| 3 | EG-3 Particle/Nuclear | Lattice QCD hadron-mass ratios → bare quark mass | continuous-parameter regression |
-| 4 | EG-4 EE flagship | AAH metamaterial chain | multi-parameter + common-mode systematic |
-| 5 | EG-4 EE alt | Hidden RF filter topology from S-parameters | topology-id + values |
-| 6 | EG-5 Astrophysics | Orbit determination from sparse observations | 6-param continuous regression |
-| 7 | EG-6 Seismology | Earthquake hypocenter from synthetic seismograms | localization |
-| 8 | EG-7 Systems Biology | Two-compartment PK from sparse concentrations | complementary-mode (plasma + urine) |
-| 9 | EG-8 Mech Eng | Applied force on plate from strain gauges | sparse-sensor inversion + non-canonical assumption |
+| 1 | EG-1 Bioinformatics & Systems Biology | BAM file with systematically wrong variant calls | candidate-set classification |
+| 2 | EG-2 Computational Chemistry | Unknown molecule from IR spectrum (candidate set) | candidate-set + multi-mode |
+| 3 | EG-3 Physics | Lattice QCD hadron-mass ratios → bare quark mass | continuous-parameter regression |
+| 4 | EG-4 Electrical Engineering | AAH metamaterial chain | multi-parameter + common-mode systematic |
+| 5 | EG-4 Electrical Engineering | Hidden RF filter topology from S-parameters | topology-id + values |
+| 6 | EG-3 Physics | Orbit determination from sparse observations (astrophysics) | 6-param continuous regression |
+| 7 | EG-3 Physics | Earthquake hypocenter from synthetic seismograms (geophysics) | localization |
+| 8 | EG-1 Bioinformatics & Systems Biology | Two-compartment PK from sparse concentrations | complementary-mode (plasma + urine) |
+| 9 | EG-5 Mechanical & Structural Engineering | Applied force on plate from strain gauges | sparse-sensor inversion + non-canonical assumption |
 
 ## Selecting an analog
 
@@ -21,15 +21,12 @@ Full walkthroughs in the Everglades Hub Anchor Example Library.
 
 | Domain | Primary anchor(s) | Tool family |
 |---|---|---|
-| EG-1 Bioinformatics | #1 BAM variant calls | BioPython, PySAM, scanpy, anndata |
+| EG-1 Bioinformatics & Systems Biology | #1 BAM variant calls, #8 PK 2-compartment | BioPython, PySAM, scanpy, anndata, scipy.integrate, PyMC |
 | EG-2 Computational Chemistry | #2 IR spectrum | PySCF, ORCA, RDKit |
-| EG-3 Particle/Nuclear | #3 Lattice QCD | scikit-hep |
+| EG-3 Physics | #3 Lattice QCD, #6 Orbit determination, #7 Earthquake hypocenter | scikit-hep, astropy, Poliastro, ObsPy, SpecFEM3D |
 | EG-4 Electrical Engineering | #4 AAH metamaterial, #5 RF filter | ngspice, scikit-rf, openEMS |
-| EG-5 Astrophysics | #6 Orbit determination | astropy, Poliastro |
-| EG-6 Seismology | #7 Earthquake hypocenter | ObsPy, SpecFEM3D |
-| EG-7 Systems Biology | #8 PK 2-compartment | scipy.integrate, PyMC |
-| EG-8 Mechanical Engineering | #9 Plate strain gauges | scikit-fem, OpenFOAM |
-| EG-9 Applied Math | analog to #8 (parameter inference) | PyMC, JAGS |
+| EG-5 Mechanical & Structural Engineering | #9 Plate strain gauges | scikit-fem, OpenFOAM |
+| EG-6 Applied Statistics & Mathematics | analog to #8 / #9 (parameter inference) | PyMC, JAGS, statsmodels |
 
 If the expert's domain doesn't have a direct anchor or their task shape doesn't match the domain's primary anchor, **then** consider these cross-domain shape-matches as a secondary fallback:
 

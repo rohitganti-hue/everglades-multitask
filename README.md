@@ -32,7 +32,7 @@ The wizard prompts for:
 | Prompt | What to enter |
 |---|---|
 | Anthropic API key | **OPTIONAL** — only for `/everglades-preview`. Get one at <https://console.anthropic.com/> if you want the proxy eval; press Enter to skip. |
-| Domain code | `EG-1` for Bioinformatics, `EG-2` for Comp Chemistry, etc. The scaffolder uses this to pick anchor examples. |
+| Domain code | Your assigned domain: `EG-1` Bioinformatics & Systems Biology · `EG-2` Computational Chemistry · `EG-3` Physics · `EG-4` Electrical Engineering · `EG-5` Mechanical & Structural Engineering · `EG-6` Applied Statistics & Mathematics. The scaffolder uses this to pick anchor examples. |
 
 That's it. No RLS API key, no Taiga API key.
 
