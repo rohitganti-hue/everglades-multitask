@@ -85,31 +85,33 @@ Skill: all 3 are scanpy/AnnData. Scaffolds shared module
                  Suggests: replace module_score with two modes —
                  panel_baseline_expression + perturbation_response —
                  model must combine to get the disease signature.
-          Expert: edits oracle.py with skill's guidance.
+          Expert: edits oracle/setup.py with skill's guidance.
           Re-preview: 2/8 ✓ IN RANGE
 
-10:00 AM  All 3 in range. > /everglades-push-all
-          3 RLS tasks created in EG-1 world, files uploaded,
-          custom_fields PATCHed. Skill prints 3 RLS URLs:
-            https://studio.mercor.com/task/<id1>
-            https://studio.mercor.com/task/<id2>
-            https://studio.mercor.com/task/<id3>
+10:00 AM  All 3 in range. > /everglades-export draft-1 (+ draft-2, draft-3)
+          3 MANIFEST.md files written — each maps every draft file to its
+          RLS form field. (The skill makes ZERO RLS/Taiga calls; everything
+          after this is manual in the RLS web UI.)
 
-10:02 AM  Expert opens each URL in browser, clicks magic-star →
-          STEM Software Runner. Taiga starts 3 × 16-model runs in parallel.
-          ~30 seconds of clicking, then back to Claude Code.
+10:02 AM  Expert opens https://studio.mercor.com/, creates 3 EG-1 tasks,
+          and copy-pastes each draft's files per its MANIFEST, then clicks
+          magic-star → STEM Software Runner on each. Taiga starts
+          3 × 16-model runs in parallel. A few minutes of pasting + clicking.
 
-10:35 AM  > /everglades-status
-          task-1: 3/16 ✓ → /everglades-submit
-          task-2: still running (~10 min ETA)
-          task-3: still running (~15 min ETA)
+10:35 AM  Results land in the RLS UI — the expert watches Taiga there
+          (the skill can't see them):
+            task-1  3/16 ✓ → Submit for Review (in the RLS UI)
+            task-2  still running (~10 min ETA)
+            task-3  still running (~15 min ETA)
 
-10:42 AM  > /everglades-status
-          task-2: 4/16 ✓ → /everglades-submit
-          task-3: still running
+          Link the shipped tasks back so the dashboard funnel updates:
+            > /everglades-rls draft-1 --task-id <id> --status submitted
 
-10:48 AM  > /everglades-status
-          task-3: 5/16 ✗ — preview-vs-Taiga drift; one more harden
+10:42 AM  task-2  4/16 ✓ → Submit for Review
+            > /everglades-rls draft-2 --task-id <id> --status submitted
+
+10:48 AM  task-3  5/16 ✗ — preview-vs-Taiga drift; harden draft-3 locally,
+          re-export, and re-paste into the RLS form
 ```
 
 3 tasks shipped (with 1 needing one more round) in **~1h 45m of active time** — vs **4 days** sequentially.
@@ -140,7 +142,7 @@ Three sibling sets, each shipped in a single focused day = **3 days total instea
 |---|---|
 | Shared scaffolding | All 3 May-4 tasks use scanpy/AnnData. Skill generates a shared `_shared/anndata_oracle_base.py` once, extends per-draft. |
 | Preview catches "too easy" pre-Taiga | Opus 4.7 × 8 attempts via API. ~90s vs ~40 min of Taiga. |
-| Async Taiga dispatch | 3 Taiga runs in 50 min wall-clock vs 2+ hrs serial. |
+| Parallel Taiga dispatch | Paste + magic-star all 3 tasks back-to-back in the RLS UI → 3 × 16-model runs execute in parallel (~50 min) instead of ~2+ hrs serial. (Manual clicks, but quick.) |
 | Cross-task degeneracy check | Would have caught the April duplicate pair (xm0vffa1 + w49sa943) before either was shipped. |
 | Transcript-driven hardening | Skill analyzes preview transcripts and points at the specific oracle mode that's leaking. Turns "5+/16 try again" into "split mode X". |
 | Cross-task reviewer feedback patterns | When 2 of 3 tasks come back with the same class of feedback, the skill flags it as one calibration gap, not 3 fixes. |

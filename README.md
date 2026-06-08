@@ -187,7 +187,7 @@ Pass rate interpretation (validated against Taiga ground truth, 2026-05-28):
 
 | Pass rate | Verdict | Action |
 |---|---|---|
-| 0/8 | CHECK MAIN OR ORACLE | Likely main.py or oracle.py is broken |
+| 0/8 | CHECK MAIN OR ORACLE | Likely main.py or oracle/setup.py is broken |
 | 1–2/8 | IN RANGE | `/everglades-export` and paste to RLS |
 | 3/8 | BORDERLINE | Harden once, re-preview, OR `--force` if confident |
 | 4+/8 | TOO EASY | Skill suggests which Strategy (1–5) to apply |

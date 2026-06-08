@@ -38,7 +38,7 @@ does it produce + why.
 
 ## Step 5 — Build the files
 
-`oracle.py` + `main.py` + `shortcut.py`. The skill scaffolds; the expert owns
+`oracle/setup.py` + `main.py` + `shortcut.py`. The skill scaffolds; the expert owns
 the science. **Per AI Use Policy, Claude can help with code; expert writes the
 science.**
 
@@ -54,8 +54,8 @@ See: `oracle-design.md`.
 
 ## Step 7 — Calibrate
 
-Run `main.py` against `oracle.py` → must pass.
-Run `shortcut.py` against `oracle.py` → must FAIL.
+Run `main.py` against `oracle/setup.py` → must pass.
+Run `shortcut.py` against `oracle/setup.py` → must FAIL.
 Vary the oracle's noise seed and re-run `main.py` → must still pass within tolerance
 (the answer must not drift with the seed — canonical robustness check).
 Run `/everglades-preview` (Opus 4.7 × 8 attempts) → target ≤2/8 pass rate.

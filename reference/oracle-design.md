@@ -50,7 +50,7 @@ Set a budget so a careful solver can investigate but brute-force can't. Typical:
 
 ## Skill lint output
 
-`/everglades-lint <draft>` checks oracle.py for:
+`/everglades-lint <draft>` checks oracle/setup.py for:
 
 - `check_*` / `validate_*` patterns (grader, not instrument)
 - Hidden-parameter leak — a `return` that hands back a `HIDDEN_PARAMS` value

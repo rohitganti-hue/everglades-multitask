@@ -321,7 +321,7 @@ def classify(pass_rate: float) -> str:
         return "BORDERLINE"        # 3/8 -> ambiguous; expert can override with --force
     if pass_rate > 0:
         return "IN_RANGE"          # 1-2/8 -> proceed to Taiga
-    return "CHECK_MAIN_OR_ORACLE"  # 0/8 -> likely main.py / oracle.py is broken
+    return "CHECK_MAIN_OR_ORACLE"  # 0/8 -> likely main.py / oracle/setup.py is broken
 
 
 async def main_async():

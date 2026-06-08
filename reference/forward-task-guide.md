@@ -23,7 +23,7 @@ NOT the simulation itself — models can drive any supported tool. The hard part
 
 ## Skill differences from inverse
 
-- No `oracle.py`. Replace with `simulation/` directory containing tool input files.
+- No `oracle/setup.py`. Replace with `simulation/` directory containing tool input files.
 - `shortcut.py` implements the default-mesh / default-solver path that silently fails.
 - Preview eval: same Anthropic tool-use pattern, but Claude calls a `run_simulation` tool that subprocesses the tool against the local `simulation/` directory.
 
