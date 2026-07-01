@@ -1,4 +1,0 @@
-# Place forward-task simulation input files in this directory.
-# Examples: OpenFOAM case folders, FEniCS mesh files, ngspice netlists.
-# These are VISIBLE to the model (unlike inverse-task oracle/).
-# Reference them by filename in problem.md.
